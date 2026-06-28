@@ -1,65 +1,110 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useSession } from "@/context/SessionContext";
+import { EventForm } from "@/components/EventForm";
+import { EventList } from "@/components/EventList";
+import { TimezoneSelector } from "@/components/TimezoneSelector";
 
 export default function Home() {
+  const { session, updatePerson, addEvent, removeEvent } = useSession();
+  const [showForm, setShowForm] = useState(false);
+  const you = session.people[0];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="max-w-[780px] mx-auto px-5 py-8 pb-16">
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-10">
+        <div className="text-[22px] font-medium tracking-tight">
+          Are<span className="text-green">You</span>FreeYet
+          <span className="inline-block w-[7px] h-[7px] bg-green rounded-full ml-px relative -top-0.5" />
+        </div>
+        <TimezoneSelector />
+      </div>
+
+      {/* Steps */}
+      <div className="flex bg-surface border border-border rounded-card p-1 mb-8">
+        <button className="flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 bg-green text-white font-medium">
+          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] bg-white/20">
+            1
+          </span>
+          Your schedule
+        </button>
+        <button className="flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 text-text-3">
+          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] bg-black/[0.06]">
+            2
+          </span>
+          Friends
+        </button>
+        <button className="flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 text-text-3">
+          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] bg-black/[0.06]">
+            3
+          </span>
+          Results
+        </button>
+      </div>
+
+      {/* Card */}
+      <div className="bg-surface border border-border rounded-card p-6 mb-4 shadow-card">
+        <div className="text-base font-medium mb-1">Your schedule</div>
+        <div className="text-[13px] text-text-2 mb-5">
+          Add your classes and commitments.
+        </div>
+
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-9 h-9 rounded-full bg-green-light text-green-dark flex items-center justify-center text-[13px] font-medium">
+            {initials(you.name)}
+          </div>
+          <input
+            type="text"
+            value={you.name}
+            onChange={(e) => updatePerson(you.id, { name: e.target.value })}
+            placeholder="Your name"
+            className="max-w-[220px] border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green"
+          />
+        </div>
+
+        <EventList
+          events={you.events}
+          onRemove={(eventId) => removeEvent(you.id, eventId)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {showForm ? (
+          <EventForm
+            onAdd={(event) => {
+              addEvent(you.id, event);
+              setShowForm(false);
+            }}
+            onCancel={() => setShowForm(false)}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            + Add event
+          </button>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control bg-green text-white font-medium text-sm hover:bg-green-dark transition-colors">
+          Add friends →
+        </button>
+      </div>
     </div>
+  );
+}
+
+function initials(name: string): string {
+  return (
+    (name || "?")
+      .trim()
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
   );
 }
