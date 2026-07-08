@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/context/SessionContext";
-import { TimezoneProvider } from "@/context/TimezoneContext";
 
 const dmSans = DM_Sans({
   variable: "--font-sans",
@@ -30,9 +29,7 @@ export default function RootLayout({
       className={`${dmSans.variable} ${dmMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <TimezoneProvider>
-          <SessionProvider>{children}</SessionProvider>
-        </TimezoneProvider>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

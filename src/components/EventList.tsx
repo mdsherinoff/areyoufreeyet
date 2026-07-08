@@ -2,19 +2,18 @@
 
 import { BusyEvent } from "@/types";
 import { formatTimeStr } from "@/lib/time";
-import { useTimezone } from "@/context/TimezoneContext";
 import { convertEventDaysFromUTC } from "@/lib/timezone";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface EventListProps {
+  /** Timezone the stored (UTC) events are displayed in. */
+  timezone: string;
   events: BusyEvent[];
   onRemove: (eventId: string) => void;
 }
 
-export function EventList({ events, onRemove }: EventListProps) {
-  const { timezone } = useTimezone();
-
+export function EventList({ timezone, events, onRemove }: EventListProps) {
   if (events.length === 0) {
     return (
       <div className="text-center py-6 text-text-3 text-sm">

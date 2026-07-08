@@ -37,7 +37,7 @@ export function parseICS(icsText: string): ICSImportResult {
   for (const vtz of vtimezones) {
     const tz = new ICAL.Timezone(vtz);
     if (tz.tzid) {
-      ICAL.TimezoneService.register(tz.tzid, tz);
+      ICAL.TimezoneService.register(tz, tz.tzid);
     }
   }
 

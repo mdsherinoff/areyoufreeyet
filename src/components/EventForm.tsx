@@ -3,24 +3,27 @@
 import { useState } from "react";
 import { BusyEvent } from "@/types";
 import { createEvent } from "@/lib/factory";
-import { useTimezone } from "@/context/TimezoneContext";
 import { convertEventDaysToUTC } from "@/lib/timezone";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface EventFormProps {
+  /** Timezone the entered wall-clock times are interpreted in. */
+  timezone: string;
   onAdd: (event: BusyEvent) => void;
   onCancel: () => void;
 }
 
-export function EventForm({ onAdd, onCancel }: EventFormProps) {
+export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"recurring" | "once">("recurring");
   const [days, setDays] = useState<number[]>([]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [error, setError] = useState<string | null>(null);
-  const { timezone } = useTimezone();
+
+  // Equal times = zero-length (invalid); end < start = crosses midnight (ok).
+  const overnight = endTime < startTime;
 
   const toggleDay = (dayIndex: number) => {
     setDays((prev) =>
@@ -35,8 +38,8 @@ export function EventForm({ onAdd, onCancel }: EventFormProps) {
       setError("Please select at least one day.");
       return;
     }
-    if (endTime <= startTime) {
-      setError("End time must be after start time.");
+    if (endTime === startTime) {
+      setError("Start and end time can't be the same.");
       return;
     }
     setError(null);
@@ -61,7 +64,7 @@ export function EventForm({ onAdd, onCancel }: EventFormProps) {
     setDays([]);
     setStartTime("09:00");
     setEndTime("10:00");
-  };;
+  };
 
   return (
     <div className="border border-border rounded-card p-4 mt-4 bg-bg">
@@ -145,6 +148,9 @@ export function EventForm({ onAdd, onCancel }: EventFormProps) {
             className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green bg-white"
           />
         </div>
+        {overnight && (
+          <div className="text-xs text-text-3 pb-2.5">ends next day</div>
+        )}
       </div>
 
       {error && <div className="text-red text-sm mb-3">{error}</div>}

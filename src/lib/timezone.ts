@@ -12,46 +12,6 @@ export function detectBrowserTimezone(): string {
   }
 }
 
-/**
- * Convert a "wall clock" time (as entered by a user, e.g. "09:00" on a given
- * reference date) in a given timezone into UTC minutes-since-midnight.
- *
- * We need a reference date because timezone offsets can change across the
- * year (daylight saving). We use a fixed reference date matching the actual
- * event's day where possible; for recurring weekly events without a specific
- * date, "today" is a reasonable approximation.
- */
-export function wallTimeToUTCMinutes(
-  timeStr: string,
-  timezone: string,
-  referenceDate: Date = new Date(),
-): number {
-  const [h, m] = timeStr.split(":").map(Number);
-  const naive = new Date(referenceDate);
-  naive.setHours(h, m, 0, 0);
-
-  const utcInstant = fromZonedTime(naive, timezone);
-  return utcInstant.getUTCHours() * 60 + utcInstant.getUTCMinutes();
-}
-
-/**
- * Convert UTC minutes-since-midnight back into a wall-clock "HH:MM" string
- * in the given display timezone.
- */
-export function utcMinutesToWallTime(
-  utcMinutes: number,
-  timezone: string,
-  referenceDate: Date = new Date(),
-): string {
-  const utcInstant = new Date(referenceDate);
-  utcInstant.setUTCHours(Math.floor(utcMinutes / 60), utcMinutes % 60, 0, 0);
-
-  const zoned = toZonedTime(utcInstant, timezone);
-  const hh = String(zoned.getHours()).padStart(2, "0");
-  const mm = String(zoned.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
-
 /** A small curated list of common timezones for the selector dropdown. */
 export const COMMON_TIMEZONES = [
   "UTC",
@@ -113,6 +73,10 @@ export function convertEventDaysToUTC(
     const startNaive = new Date(dayDate);
     startNaive.setHours(sh, sm, 0, 0);
     const endNaive = new Date(dayDate);
+    // Overnight event (wall-clock end <= start): the end lands on the next day.
+    if (eh * 60 + em <= sh * 60 + sm) {
+      endNaive.setDate(endNaive.getDate() + 1);
+    }
     endNaive.setHours(eh, em, 0, 0);
 
     const startUTC = fromZonedTime(startNaive, timezone);
@@ -164,6 +128,10 @@ export function convertEventDaysFromUTC(
     const startUTC = new Date(dayDateUTC);
     startUTC.setUTCHours(sh, sm, 0, 0);
     const endUTC = new Date(dayDateUTC);
+    // Overnight event (UTC end <= start): the end lands on the next UTC day.
+    if (eh * 60 + em <= sh * 60 + sm) {
+      endUTC.setUTCDate(endUTC.getUTCDate() + 1);
+    }
     endUTC.setUTCHours(eh, em, 0, 0);
 
     const startZoned = toZonedTime(startUTC, timezone);
@@ -181,4 +149,39 @@ export function convertEventDaysFromUTC(
     startTime: displayStartTime,
     endTime: displayEndTime,
   };
+}
+
+/**
+ * Convert a wall-clock (day, "HH:MM") from one timezone into the equivalent
+ * wall-clock (day, "HH:MM") in another timezone, using the same fixed
+ * reference week as the other converters. Used in results to show a common
+ * free window in each participant's own local time.
+ */
+export function convertWallTimeBetweenZones(
+  day: number,
+  timeStr: string,
+  fromTz: string,
+  toTz: string,
+): { day: number; time: string } {
+  const ANCHOR_MONDAY = new Date("2026-06-29T00:00:00");
+  const dayDate = new Date(ANCHOR_MONDAY);
+  dayDate.setDate(ANCHOR_MONDAY.getDate() + day);
+
+  const [h, m] = timeStr.split(":").map(Number);
+  const naive = new Date(dayDate);
+  naive.setHours(h, m, 0, 0);
+
+  const utc = fromZonedTime(naive, fromTz);
+  const zoned = toZonedTime(utc, toTz);
+
+  return {
+    day: (zoned.getDay() + 6) % 7,
+    time: `${String(zoned.getHours()).padStart(2, "0")}:${String(zoned.getMinutes()).padStart(2, "0")}`,
+  };
+}
+
+/** Human-friendly label for an IANA timezone, e.g. "America/New_York" -> "New York". */
+export function tzLabel(tz: string): string {
+  const city = tz.split("/").pop() ?? tz;
+  return city.replace(/_/g, " ");
 }

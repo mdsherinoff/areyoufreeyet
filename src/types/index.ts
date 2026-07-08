@@ -10,6 +10,7 @@ export interface BusyEvent {
 export interface Person {
   id: string;
   name: string;
+  timezone: string; // IANA tz this person's events are anchored to, e.g. "Europe/London"
   events: BusyEvent[];
 }
 

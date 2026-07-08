@@ -2,14 +2,26 @@
 
 import { useState } from "react";
 import { useSession } from "@/context/SessionContext";
-import { EventForm } from "@/components/EventForm";
-import { EventList } from "@/components/EventList";
-import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { PersonSchedule } from "@/components/PersonSchedule";
+import { AddFriend } from "@/components/AddFriend";
+import { Results } from "@/components/Results";
+import { StepNav, Step } from "@/components/StepNav";
+import { ShareButton } from "@/components/ShareButton";
 
 export default function Home() {
-  const { session, updatePerson, addEvent, removeEvent } = useSession();
-  const [showForm, setShowForm] = useState(false);
+  const { session, ready, joinedFromLink } = useSession();
+  const [step, setStep] = useState<Step>(1);
+
+  if (!ready) {
+    return (
+      <div className="max-w-[780px] mx-auto px-5 py-8">
+        <div className="text-text-3 text-sm">Loading…</div>
+      </div>
+    );
+  }
+
   const you = session.people[0];
+  const friends = session.people.slice(1);
 
   return (
     <div className="max-w-[780px] mx-auto px-5 py-8 pb-16">
@@ -19,92 +31,137 @@ export default function Home() {
           Are<span className="text-green">You</span>FreeYet
           <span className="inline-block w-[7px] h-[7px] bg-green rounded-full ml-px relative -top-0.5" />
         </div>
-        <TimezoneSelector />
+        <ShareButton />
       </div>
 
-      {/* Steps */}
-      <div className="flex bg-surface border border-border rounded-card p-1 mb-8">
-        <button className="flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 bg-green text-white font-medium">
-          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] bg-white/20">
-            1
-          </span>
-          Your schedule
-        </button>
-        <button className="flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 text-text-3">
-          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] bg-black/[0.06]">
-            2
-          </span>
-          Friends
-        </button>
-        <button className="flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 text-text-3">
-          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] bg-black/[0.06]">
-            3
-          </span>
-          Results
-        </button>
-      </div>
-
-      {/* Card */}
-      <div className="bg-surface border border-border rounded-card p-6 mb-4 shadow-card">
-        <div className="text-base font-medium mb-1">Your schedule</div>
-        <div className="text-[13px] text-text-2 mb-5">
-          Add your classes and commitments.
-        </div>
-
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-9 h-9 rounded-full bg-green-light text-green-dark flex items-center justify-center text-[13px] font-medium">
-            {initials(you.name)}
-          </div>
-          <input
-            type="text"
-            value={you.name}
-            onChange={(e) => updatePerson(you.id, { name: e.target.value })}
-            placeholder="Your name"
-            className="max-w-[220px] border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green"
-          />
-        </div>
-
-        <EventList
-          events={you.events}
-          onRemove={(eventId) => removeEvent(you.id, eventId)}
-        />
-
-        {showForm ? (
-          <EventForm
-            onAdd={(event) => {
-              addEvent(you.id, event);
-              setShowForm(false);
-            }}
-            onCancel={() => setShowForm(false)}
-          />
-        ) : (
+      {joinedFromLink && (
+        <div className="bg-green-light text-green-dark border border-green-mid/40 rounded-card px-4 py-3 mb-6 text-[13px]">
+          You&apos;ve opened a shared plan with {session.people.length}{" "}
+          {session.people.length === 1 ? "person" : "people"}. Add yourself under{" "}
           <button
             type="button"
-            onClick={() => setShowForm(true)}
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
+            onClick={() => setStep(2)}
+            className="underline font-medium"
           >
-            + Add event
+            Friends
           </button>
-        )}
-      </div>
+          , then re-share the link.
+        </div>
+      )}
 
-      <div className="flex justify-end">
-        <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control bg-green text-white font-medium text-sm hover:bg-green-dark transition-colors">
-          Add friends →
-        </button>
-      </div>
+      <StepNav current={step} onChange={setStep} />
+
+      {/* Step 1 — Your schedule */}
+      {step === 1 && (
+        <>
+          <Card
+            title="Your schedule"
+            subtitle="Add your classes and commitments, or import a calendar."
+          >
+            {you ? (
+              <PersonSchedule person={you} />
+            ) : (
+              <div className="text-text-3 text-sm">No one here yet.</div>
+            )}
+          </Card>
+          <FooterNav
+            next={{ label: "Add friends →", onClick: () => setStep(2) }}
+          />
+        </>
+      )}
+
+      {/* Step 2 — Friends */}
+      {step === 2 && (
+        <>
+          <Card
+            title="Friends"
+            subtitle="Add the people you want to find time with — enter their schedule, import their calendar, or send them the share link so they add themselves."
+          >
+            <div className="flex flex-col gap-3">
+              {friends.length === 0 && (
+                <div className="text-center py-6 text-text-3 text-sm">
+                  No friends added yet.
+                </div>
+              )}
+              {friends.map((f) => (
+                <PersonSchedule key={f.id} person={f} removable />
+              ))}
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <AddFriend defaultTimezone={you?.timezone ?? "UTC"} />
+                <ShareButton />
+              </div>
+            </div>
+          </Card>
+          <FooterNav
+            back={{ label: "← Back", onClick: () => setStep(1) }}
+            next={{ label: "See results →", onClick: () => setStep(3) }}
+          />
+        </>
+      )}
+
+      {/* Step 3 — Results */}
+      {step === 3 && (
+        <>
+          <Card
+            title="Results"
+            subtitle="The overlap of everyone's schedules — greener means more people free."
+          >
+            <Results />
+          </Card>
+          <FooterNav back={{ label: "← Back", onClick: () => setStep(2) }} />
+        </>
+      )}
     </div>
   );
 }
 
-function initials(name: string): string {
+function Card({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
   return (
-    (name || "?")
-      .trim()
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "?"
+    <div className="bg-surface border border-border rounded-card p-6 mb-4 shadow-card">
+      <div className="text-base font-medium mb-1">{title}</div>
+      <div className="text-[13px] text-text-2 mb-5">{subtitle}</div>
+      {children}
+    </div>
+  );
+}
+
+function FooterNav({
+  back,
+  next,
+}: {
+  back?: { label: string; onClick: () => void };
+  next?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="flex justify-between items-center gap-3">
+      {back ? (
+        <button
+          type="button"
+          onClick={back.onClick}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
+        >
+          {back.label}
+        </button>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <button
+          type="button"
+          onClick={next.onClick}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control bg-green text-white font-medium text-sm hover:bg-green-dark transition-colors"
+        >
+          {next.label}
+        </button>
+      )}
+    </div>
   );
 }

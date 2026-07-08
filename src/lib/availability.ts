@@ -64,6 +64,8 @@ export function findFreeWindows(
   minBlockHours: number,
   dayFilter: DayFilter = "all",
 ): FreeWindow[] {
+  if (matrices.length === 0) return [];
+
   const windows: FreeWindow[] = [];
   const minSlots = (minBlockHours * 60) / SLOT_MINS;
 
@@ -73,9 +75,12 @@ export function findFreeWindows(
     let start = -1;
     let len = 0;
 
-    for (let slot = 0; slot <= matrices[0].length; slot++) {
+    // Iterate one past the last slot so a block running to end-of-day is
+    // flushed. NOTE: each matrix is [day][slot], so the slot count is
+    // SLOTS_PER_DAY -- not matrices[0].length (which is the day count, 7).
+    for (let slot = 0; slot <= SLOTS_PER_DAY; slot++) {
       const allFree =
-        slot < matrices[0].length && matrices.every((m) => !m[day][slot]);
+        slot < SLOTS_PER_DAY && matrices.every((m) => !m[day][slot]);
 
       if (allFree) {
         if (start < 0) start = slot;
@@ -96,4 +101,17 @@ export function findFreeWindows(
   }
 
   return windows;
+}
+
+/**
+ * For each [day][slot], count how many people are free. Used to render the
+ * overlap heatmap. A slot with count === matrices.length means everyone is
+ * free at that time.
+ */
+export function buildFreeCounts(matrices: BusyMatrix[]): number[][] {
+  return Array.from({ length: 7 }, (_, day) =>
+    Array.from({ length: SLOTS_PER_DAY }, (_, slot) =>
+      matrices.reduce((n, m) => n + (m[day][slot] ? 0 : 1), 0),
+    ),
+  );
 }
