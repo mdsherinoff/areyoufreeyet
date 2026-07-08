@@ -49,12 +49,12 @@ export function IcsImport({ onImport }: IcsImportProps) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm font-medium text-text hover:border-maroon/40 hover:bg-maroon-light/40 transition-all active:scale-[0.98]"
+        className="inline-flex items-center gap-2 border border-text px-4 py-2 text-[13px] font-medium transition-colors hover:bg-maroon hover:border-maroon hover:text-white active:scale-[0.98]"
         title="Import a .ics calendar export"
       >
         <IconUpload width={15} height={15} /> Import .ics
       </button>
-      {status && <span className="text-xs text-text-3">{status}</span>}
+      {status && <span className="eyebrow">{status}</span>}
     </div>
   );
 }

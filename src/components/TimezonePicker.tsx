@@ -16,12 +16,12 @@ export function TimezonePicker({
   className = "",
 }: TimezonePickerProps) {
   return (
-    <label className={`text-sm flex items-center gap-2 ${className}`}>
-      {label && <span className="text-text-2 text-xs">{label}</span>}
+    <label className={`flex items-center gap-2 ${className}`}>
+      {label && <span className="eyebrow">{label}</span>}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="border border-border-mid rounded-control px-2.5 py-1.5 text-sm bg-white outline-none focus:border-maroon"
+        className="cursor-pointer border-b-2 border-border bg-transparent py-1 font-mono text-[12px] uppercase tracking-[0.08em] outline-none transition-colors hover:border-border-mid focus:border-maroon"
       >
         {/* Keep an unlisted tz (e.g. detected or from a shared link) selectable. */}
         {value && !COMMON_TIMEZONES.includes(value) && (

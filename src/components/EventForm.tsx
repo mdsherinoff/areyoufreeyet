@@ -66,109 +66,102 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
     setEndTime("10:00");
   };
 
-  return (
-    <div className="border border-border rounded-card p-4 mt-4 bg-bg">
-      <div className="text-sm font-medium mb-4">Add busy time</div>
+  const inputCls =
+    "border-b-2 border-border bg-transparent px-1 py-2 text-sm outline-none transition-colors focus:border-maroon";
 
-      <div className="mb-3">
-        <label className="text-xs text-text-2 block mb-1">Title</label>
+  return (
+    <div className="mt-6 border-l-2 border-maroon pl-5">
+      <div className="eyebrow mb-5 text-maroon">Add busy time</div>
+
+      <div className="mb-5">
+        <label className="eyebrow mb-2 block">Title</label>
         <input
           type="text"
           placeholder="e.g. Maths lecture"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
+          className={`${inputCls} w-full`}
         />
       </div>
 
-      <div className="mb-3">
-        <label className="text-xs text-text-2 block mb-1">Type</label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setType("recurring")}
-            className={`flex-1 py-2 rounded-control text-sm border transition-colors ${
-              type === "recurring"
-                ? "bg-maroon text-white border-maroon"
-                : "bg-white border-border-mid text-text-2"
-            }`}
-          >
-            Recurring
-          </button>
-          <button
-            type="button"
-            onClick={() => setType("once")}
-            className={`flex-1 py-2 rounded-control text-sm border transition-colors ${
-              type === "once"
-                ? "bg-maroon text-white border-maroon"
-                : "bg-white border-border-mid text-text-2"
-            }`}
-          >
-            One-off
-          </button>
+      <div className="mb-5">
+        <label className="eyebrow mb-2 block">Type</label>
+        <div className="inline-flex border border-border-mid">
+          {(["recurring", "once"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setType(t)}
+              className={`px-4 py-2 text-[13px] font-medium transition-colors ${
+                type === t
+                  ? "bg-maroon text-white"
+                  : "bg-transparent text-text-2 hover:text-text"
+              }`}
+            >
+              {t === "recurring" ? "Recurring" : "One-off"}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="mb-3">
-        <label className="text-xs text-text-2 block mb-1">Days</label>
+      <div className="mb-5">
+        <label className="eyebrow mb-2 block">Days</label>
         <div className="flex gap-1.5">
           {DAYS.map((d, i) => (
             <button
               type="button"
               key={i}
               onClick={() => toggleDay(i)}
-              className={`w-9 h-9 rounded-full text-xs font-medium border transition-colors ${
+              className={`h-9 w-9 border font-mono text-[12px] font-medium transition-colors ${
                 days.includes(i)
-                  ? "bg-maroon text-white border-maroon"
-                  : "bg-white border-border-mid text-text-2"
+                  ? "border-maroon bg-maroon text-white"
+                  : "border-border-mid bg-transparent text-text-2 hover:border-text"
               }`}
             >
-              {d.slice(0, 1)}
+              {d[0]}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="mb-3 flex items-end gap-2">
+      <div className="mb-5 flex items-end gap-4">
         <div>
-          <label className="text-xs text-text-2 block mb-1">From</label>
+          <label className="eyebrow mb-2 block">From</label>
           <input
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
+            className={`${inputCls} font-mono`}
           />
         </div>
         <div>
-          <label className="text-xs text-text-2 block mb-1">To</label>
+          <label className="eyebrow mb-2 block">To</label>
           <input
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
+            className={`${inputCls} font-mono`}
           />
         </div>
-        {overnight && (
-          <div className="text-xs text-text-3 pb-2.5">ends next day</div>
-        )}
+        {overnight && <div className="eyebrow pb-2.5">ends next day</div>}
       </div>
 
-      {error && <div className="text-red text-sm mb-3">{error}</div>}
+      {error && <div className="mb-4 text-[13px] text-red">{error}</div>}
 
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 rounded-control border border-border-mid bg-white text-sm hover:bg-bg transition-colors"
-        >
-          Cancel
-        </button>
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={handleSubmit}
-          className="px-4 py-2 rounded-control bg-maroon text-white text-sm font-medium hover:bg-maroon-dark transition-colors"
+          className="bg-maroon px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.14em] text-white transition-colors hover:bg-maroon-dark active:scale-[0.98]"
         >
           Add
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-[13px] font-medium text-text-2 transition-colors hover:text-text"
+        >
+          Cancel
         </button>
       </div>
     </div>

@@ -100,7 +100,7 @@ export function Results() {
   return (
     <div>
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-5">
+      <div className="mb-7 flex flex-wrap items-start gap-x-10 gap-y-4">
         <Control label="Min free block">
           <Segmented
             options={BLOCK_OPTIONS}
@@ -117,21 +117,22 @@ export function Results() {
         </Control>
       </div>
 
-      <div className="text-[13px] text-text-2 mb-4">
-        Comparing <strong className="text-text font-medium">{total}</strong>{" "}
-        {total === 1 ? "person" : "people"} · times shown in{" "}
-        <strong className="text-text font-medium">{tzLabel(viewerTz)}</strong>
+      <div className="eyebrow mb-4">
+        {total} {total === 1 ? "person" : "people"} · times in{" "}
+        <span className="text-maroon">{tzLabel(viewerTz)}</span>
       </div>
 
       {/* Heatmap */}
-      <div className="overflow-x-auto -mx-1 px-1 mb-2">
-        <div style={{ minWidth: DAY_LABEL_W + (rangeEnd - rangeStart) * SLOT_PX }}>
+      <div className="-mx-1 mb-3 overflow-x-auto px-1">
+        <div
+          style={{ minWidth: DAY_LABEL_W + (rangeEnd - rangeStart) * SLOT_PX }}
+        >
           {/* Hour ruler */}
-          <div className="flex mb-1" style={{ paddingLeft: DAY_LABEL_W }}>
+          <div className="mb-1.5 flex" style={{ paddingLeft: DAY_LABEL_W }}>
             {hours.map((h) => (
               <div
                 key={h}
-                className="text-[9px] text-text-3 shrink-0"
+                className="shrink-0 font-mono text-[9px] uppercase tracking-wide text-text-3"
                 style={{ width: SLOT_PX * 2 }}
               >
                 {formatHourLabel(h % 24)}
@@ -140,16 +141,16 @@ export function Results() {
           </div>
 
           {/* Day rows */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-[3px]">
             {visibleDays.map((d) => (
               <div key={d} className="flex items-center">
                 <div
-                  className="text-[11px] text-text-2 shrink-0"
+                  className="shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-text-2"
                   style={{ width: DAY_LABEL_W }}
                 >
                   {DAYS_SHORT[d]}
                 </div>
-                <div className="flex overflow-hidden rounded-md ring-1 ring-border bg-bg">
+                <div className="flex border border-border bg-bg">
                   {Array.from({ length: rangeEnd - rangeStart }, (_, i) => {
                     const s = rangeStart + i;
                     const free = freeCounts[d][s];
@@ -164,11 +165,11 @@ export function Results() {
                         title={`${DAYS_SHORT[d]} ${slotToTime(s)} · ${free}/${total} free`}
                         style={{
                           width: SLOT_PX,
-                          height: 24,
+                          height: 26,
                           backgroundColor: bg,
                           borderLeft:
                             s % 2 === 0 && i !== 0
-                              ? "1px solid rgba(27,25,23,0.05)"
+                              ? "1px solid rgba(27,25,23,0.06)"
                               : "none",
                         }}
                       />
@@ -182,14 +183,14 @@ export function Results() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-2 text-[11px] text-text-3 mb-9">
-        <span>Fewer free</span>
-        <div className="flex overflow-hidden rounded ring-1 ring-border">
+      <div className="mb-10 flex items-center gap-2">
+        <span className="eyebrow">Fewer</span>
+        <div className="flex border border-border">
           {[0.16, 0.34, 0.56, 1].map((a, i) => (
             <div
               key={i}
               style={{
-                width: 16,
+                width: 18,
                 height: 12,
                 backgroundColor:
                   a === 1 ? `rgb(${MAROON_RGB})` : `rgba(${MAROON_RGB}, ${a})`,
@@ -197,50 +198,54 @@ export function Results() {
             />
           ))}
         </div>
-        <span>Everyone free</span>
+        <span className="eyebrow">Everyone free</span>
       </div>
 
       {/* Ranked windows */}
-      <div className="text-[17px] font-semibold tracking-tight mb-1">
-        {total === 1 ? "When you're free" : "When everyone's free"}
+      <div className="mb-1 flex items-baseline gap-3">
+        <span className="font-mono text-[13px] text-maroon">→</span>
+        <h3 className="display text-[20px] uppercase">
+          {total === 1 ? "When you're free" : "When everyone's free"}
+        </h3>
       </div>
-      <div className="text-[13px] text-text-2 mb-4">
-        Blocks of at least {durationLabel(minBlockHours * 60)} where{" "}
-        {total === 1 ? "you have" : "all have"} no events.
+      <div className="mb-6 text-[13px] text-text-2">
+        Blocks of at least {durationLabel(minBlockHours * 60)} with no events.
       </div>
 
       {windows.length === 0 ? (
-        <div className="border border-border rounded-card p-8 text-center text-text-3 text-sm bg-bg">
-          No common free time with these settings.
-          <br />
-          Try a shorter minimum block or a different day filter.
+        <div className="border border-dashed border-border-mid px-6 py-10 text-center">
+          <div className="eyebrow mb-2">Nothing lines up</div>
+          <div className="text-[13px] text-text-2">
+            Try a shorter minimum block or a different day filter.
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="border-t border-border">
           {windows.map((w, i) => {
             const startStr = slotToTime(w.startSlot);
             const endInclusiveNext = w.endSlot + 1;
             const endMins = endInclusiveNext * SLOT_MINS;
             const viewerEnd =
-              endMins >= 1440 ? "12am" : formatTimeStr(slotToTime(endInclusiveNext));
+              endMins >= 1440
+                ? "12am"
+                : formatTimeStr(slotToTime(endInclusiveNext));
             const others = people.filter((p) => p.timezone !== viewerTz);
             return (
-              <div
-                key={i}
-                className="relative overflow-hidden border border-border rounded-control bg-surface pl-5 pr-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 hover:border-maroon/30 hover:shadow-sm transition-all"
-              >
-                <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-maroon" />
-                <div className="font-semibold text-sm min-w-[84px]">
-                  {DAYS[w.day]}
-                </div>
-                <div className="text-sm tabular-nums">
-                  {formatTimeStr(startStr)} – {viewerEnd}
-                </div>
-                <div className="text-xs text-text-3 bg-bg border border-border rounded-pill px-2 py-0.5">
-                  {durationLabel(w.durationMins)}
+              <div key={i} className="border-b border-border py-4">
+                <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+                  <div className="w-2 self-center bg-maroon" style={{ height: 20 }} />
+                  <div className="font-display text-[17px] font-bold tracking-tight min-w-[104px]">
+                    {DAYS[w.day]}
+                  </div>
+                  <div className="font-mono text-[14px] tabular-nums">
+                    {formatTimeStr(startStr)} – {viewerEnd}
+                  </div>
+                  <div className="eyebrow ml-auto">
+                    {durationLabel(w.durationMins)}
+                  </div>
                 </div>
                 {others.length > 0 && (
-                  <div className="basis-full flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-text-2 pt-0.5">
+                  <div className="mt-2 flex flex-col gap-1 pl-5 sm:pl-[132px]">
                     {others.map((p) => {
                       const ps = convertWallTimeBetweenZones(
                         w.day,
@@ -257,13 +262,18 @@ export function Results() {
                         p.timezone,
                       );
                       return (
-                        <span key={p.id}>
-                          <span className="text-text-3">{p.name}:</span>{" "}
-                          {formatTimeStr(ps.time)} – {formatTimeStr(pe.time)}{" "}
-                          <span className="text-text-3">
-                            ({tzLabel(p.timezone)})
+                        <div
+                          key={p.id}
+                          className="flex items-baseline gap-3 text-[12px]"
+                        >
+                          <span className="eyebrow min-w-[72px] normal-case tracking-normal">
+                            {p.name}
                           </span>
-                        </span>
+                          <span className="font-mono tabular-nums text-text-2">
+                            {formatTimeStr(ps.time)} – {formatTimeStr(pe.time)}
+                          </span>
+                          <span className="eyebrow">{tzLabel(p.timezone)}</span>
+                        </div>
                       );
                     })}
                   </div>
@@ -286,7 +296,7 @@ function Control({
 }) {
   return (
     <div>
-      <div className="text-xs text-text-2 mb-1.5">{label}</div>
+      <div className="eyebrow mb-2">{label}</div>
       {children}
     </div>
   );
@@ -302,16 +312,18 @@ function Segmented<T extends string | number>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex bg-surface border border-border rounded-control p-0.5">
-      {options.map((o) => (
+    <div className="inline-flex border border-border-mid">
+      {options.map((o, idx) => (
         <button
           key={String(o.value)}
           type="button"
           onClick={() => onChange(o.value)}
-          className={`px-3 py-1.5 rounded-[7px] text-[13px] transition-colors ${
+          className={`px-3.5 py-2 text-[12px] font-medium transition-colors ${
+            idx > 0 ? "border-l border-border-mid" : ""
+          } ${
             o.value === value
-              ? "bg-maroon text-white font-medium"
-              : "text-text-2 hover:text-text"
+              ? "bg-maroon text-white"
+              : "bg-transparent text-text-2 hover:text-text"
           }`}
         >
           {o.label}

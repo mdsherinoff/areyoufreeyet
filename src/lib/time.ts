@@ -38,5 +38,6 @@ export function formatTimeStr(t: string): string {
 export function durationLabel(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
+  if (h === 0) return `${m}m`;
   return m ? `${h}h ${m}m` : `${h}h`;
 }

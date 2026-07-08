@@ -17,14 +17,14 @@ interface EventListProps {
 export function EventList({ timezone, events, onRemove }: EventListProps) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-6 text-text-3 text-sm">
-        No events added yet — all free!
+      <div className="border-t border-border py-6 text-center">
+        <span className="eyebrow">No events yet — all free</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="border-t border-border">
       {events.map((ev) => {
         const display = convertEventDaysFromUTC(
           ev.days,
@@ -32,40 +32,41 @@ export function EventList({ timezone, events, onRemove }: EventListProps) {
           ev.endTime,
           timezone,
         );
+        const recurring = ev.type === "recurring";
         return (
           <div
             key={ev.id}
-            className="flex items-center gap-3 border border-border rounded-control px-3.5 py-2.5 bg-surface hover:border-border-mid transition-colors"
+            className="group flex items-center gap-4 border-b border-border py-3"
           >
-            <div
-              className={`w-2 h-2 rounded-full shrink-0 ${
-                ev.type === "recurring" ? "bg-maroon" : "bg-amber"
+            <span
+              className={`h-2.5 w-2.5 shrink-0 ${
+                recurring ? "bg-maroon" : "bg-amber"
               }`}
+              style={{ borderRadius: 1 }}
             />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium">{ev.title}</div>
-              <div className="text-xs text-text-2">
-                {display.days.map((d) => DAYS[d]).join(", ")} ·{" "}
-                {formatTimeStr(display.startTime)} –{" "}
-                {formatTimeStr(display.endTime)}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium">{ev.title}</div>
+              <div
+                className={`eyebrow mt-0.5 ${
+                  recurring ? "text-maroon" : "text-amber"
+                }`}
+              >
+                {recurring ? "Weekly" : "One-off"}
               </div>
             </div>
-            <span
-              className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                ev.type === "recurring"
-                  ? "bg-maroon-light text-maroon-dark"
-                  : "bg-amber-light text-amber"
-              }`}
-            >
-              {ev.type === "recurring" ? "Weekly" : "One-off"}
-            </span>
+            <div className="hidden font-mono text-[11px] uppercase tracking-[0.12em] text-text-2 sm:block">
+              {display.days.map((d) => DAYS[d]).join(" ")}
+            </div>
+            <div className="w-[112px] shrink-0 text-right font-mono text-[13px] tabular-nums">
+              {formatTimeStr(display.startTime)}–{formatTimeStr(display.endTime)}
+            </div>
             <button
               type="button"
               onClick={() => onRemove(ev.id)}
-              className="text-text-3 hover:text-red hover:bg-red-light rounded-md p-1 -mr-1 transition-colors shrink-0"
+              className="shrink-0 text-text-3 opacity-60 transition-all hover:text-red hover:opacity-100"
               title="Remove"
             >
-              <IconClose width={15} height={15} />
+              <IconClose width={16} height={16} />
             </button>
           </div>
         );

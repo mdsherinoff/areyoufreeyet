@@ -56,6 +56,7 @@
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 }
 
 body {
@@ -71,7 +72,47 @@ body {
   line-height: 1.5;
 }
 
-/* Selection + focus ring in brand maroon */
+/* Selection in brand maroon */
 ::selection {
-  background: rgba(138, 21, 56, 0.16);
+  background: rgba(138, 21, 56, 0.18);
+}
+
+/* ── Editorial helpers ─────────────────────────────────────────── */
+
+/* mono, uppercase, letter-spaced micro-label */
+.eyebrow {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--color-text-2);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Big editorial display numbers/headings */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+}
+
+/* A heavy signature rule and a hairline rule */
+.rule-bold {
+  height: 3px;
+  background: var(--color-maroon);
+}
+.rule {
+  border-top: 1px solid var(--color-border);
+}
+
+/* Native controls pick up the maroon accent */
+input[type="time"],
+input[type="text"],
+select {
+  accent-color: var(--color-maroon);
 }

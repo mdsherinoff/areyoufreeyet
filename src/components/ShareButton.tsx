@@ -25,20 +25,20 @@ export function ShareButton() {
     <button
       type="button"
       onClick={handleShare}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-control border text-sm font-medium transition-all active:scale-[0.98] ${
+      className={`inline-flex items-center gap-2 border px-4 py-2 font-mono text-[12px] uppercase tracking-[0.12em] transition-all active:scale-[0.98] ${
         copied
-          ? "border-maroon/30 bg-maroon-light text-maroon-dark"
-          : "border-border-mid bg-surface text-text hover:border-maroon/40 hover:bg-maroon-light/40"
+          ? "border-maroon bg-maroon text-white"
+          : "border-text text-text hover:bg-maroon hover:border-maroon hover:text-white"
       }`}
       title="Copy a link that adds everyone's schedule for a friend"
     >
       {copied ? (
         <>
-          <IconCheck width={15} height={15} /> Link copied
+          <IconCheck width={15} height={15} /> Copied
         </>
       ) : (
         <>
-          <IconLink width={15} height={15} /> Share link
+          <IconLink width={15} height={15} /> Share
         </>
       )}
     </button>

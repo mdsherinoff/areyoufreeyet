@@ -29,7 +29,7 @@ export function AddFriend({ defaultTimezone }: AddFriendProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm font-medium text-text hover:border-maroon/40 hover:bg-maroon-light/40 transition-all active:scale-[0.98]"
+        className="inline-flex items-center gap-2 border border-text px-4 py-2 text-[13px] font-medium transition-colors hover:bg-maroon hover:border-maroon hover:text-white active:scale-[0.98]"
       >
         <IconPlus width={15} height={15} /> Add friend
       </button>
@@ -37,9 +37,9 @@ export function AddFriend({ defaultTimezone }: AddFriendProps) {
   }
 
   return (
-    <div className="border border-border rounded-card p-4 bg-bg flex flex-wrap items-end gap-3">
-      <div className="flex-1 min-w-[160px]">
-        <label className="text-xs text-text-2 block mb-1">Friend&apos;s name</label>
+    <div className="flex w-full flex-wrap items-end gap-4 border-l-2 border-maroon pl-5">
+      <div className="min-w-[160px] flex-1">
+        <label className="eyebrow mb-2 block">Friend&apos;s name</label>
         <input
           type="text"
           autoFocus
@@ -47,24 +47,24 @@ export function AddFriend({ defaultTimezone }: AddFriendProps) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="e.g. Sam"
-          className="w-full border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
+          className="w-full border-b-2 border-border bg-transparent px-1 py-2 text-sm outline-none transition-colors focus:border-maroon"
         />
       </div>
-      <TimezonePicker label="" value={timezone} onChange={setTimezone} />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="px-4 py-2 rounded-control border border-border-mid bg-white text-sm hover:bg-bg transition-colors"
-        >
-          Cancel
-        </button>
+      <TimezonePicker label="TZ" value={timezone} onChange={setTimezone} />
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={submit}
-          className="px-4 py-2 rounded-control bg-maroon text-white text-sm font-medium hover:bg-maroon-dark transition-colors"
+          className="bg-maroon px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.14em] text-white transition-colors hover:bg-maroon-dark active:scale-[0.98]"
         >
           Add
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-[13px] font-medium text-text-2 transition-colors hover:text-text"
+        >
+          Cancel
         </button>
       </div>
     </div>
