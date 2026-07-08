@@ -23,10 +23,10 @@ export function StepNav({ current, onChange }: StepNavProps) {
             key={n}
             type="button"
             onClick={() => onChange(n)}
-            className={`flex-1 py-2 px-1.5 rounded-[9px] text-[13px] flex items-center justify-center gap-1.5 transition-colors ${
+            className={`flex-1 py-2.5 px-1.5 rounded-[11px] text-[13px] flex items-center justify-center gap-1.5 transition-all ${
               active
-                ? "bg-green text-white font-medium"
-                : "text-text-3 hover:text-text-2"
+                ? "bg-maroon text-white font-medium shadow-sm"
+                : "text-text-3 hover:text-text-2 hover:bg-black/[0.03]"
             }`}
           >
             <span

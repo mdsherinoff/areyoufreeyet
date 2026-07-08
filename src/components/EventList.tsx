@@ -3,6 +3,7 @@
 import { BusyEvent } from "@/types";
 import { formatTimeStr } from "@/lib/time";
 import { convertEventDaysFromUTC } from "@/lib/timezone";
+import { IconClose } from "./Icons";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -34,11 +35,11 @@ export function EventList({ timezone, events, onRemove }: EventListProps) {
         return (
           <div
             key={ev.id}
-            className="flex items-center gap-3 border border-border rounded-control px-3.5 py-2.5"
+            className="flex items-center gap-3 border border-border rounded-control px-3.5 py-2.5 bg-surface hover:border-border-mid transition-colors"
           >
             <div
               className={`w-2 h-2 rounded-full shrink-0 ${
-                ev.type === "recurring" ? "bg-green" : "bg-amber"
+                ev.type === "recurring" ? "bg-maroon" : "bg-amber"
               }`}
             />
             <div className="flex-1 min-w-0">
@@ -52,7 +53,7 @@ export function EventList({ timezone, events, onRemove }: EventListProps) {
             <span
               className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
                 ev.type === "recurring"
-                  ? "bg-green-light text-green-dark"
+                  ? "bg-maroon-light text-maroon-dark"
                   : "bg-amber-light text-amber"
               }`}
             >
@@ -61,10 +62,10 @@ export function EventList({ timezone, events, onRemove }: EventListProps) {
             <button
               type="button"
               onClick={() => onRemove(ev.id)}
-              className="text-text-3 hover:text-red transition-colors shrink-0"
+              className="text-text-3 hover:text-red hover:bg-red-light rounded-md p-1 -mr-1 transition-colors shrink-0"
               title="Remove"
             >
-              ✕
+              <IconClose width={15} height={15} />
             </button>
           </div>
         );

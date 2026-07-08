@@ -27,7 +27,7 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SLOT_PX = 15;
 const DAY_LABEL_W = 38;
-const GREEN_RGB = "26, 158, 117";
+const MAROON_RGB = "138, 21, 56";
 
 const BLOCK_OPTIONS = [
   { label: "30 min", value: 0.5 },
@@ -149,25 +149,27 @@ export function Results() {
                 >
                   {DAYS_SHORT[d]}
                 </div>
-                <div className="flex">
+                <div className="flex overflow-hidden rounded-md ring-1 ring-border bg-bg">
                   {Array.from({ length: rangeEnd - rangeStart }, (_, i) => {
                     const s = rangeStart + i;
                     const free = freeCounts[d][s];
                     const frac = total ? free / total : 0;
                     const all = total > 0 && free === total;
                     const bg = all
-                      ? `rgb(${GREEN_RGB})`
-                      : `rgba(${GREEN_RGB}, ${(frac * 0.55).toFixed(3)})`;
+                      ? `rgb(${MAROON_RGB})`
+                      : `rgba(${MAROON_RGB}, ${(frac * 0.5 + (frac > 0 ? 0.06 : 0)).toFixed(3)})`;
                     return (
                       <div
                         key={s}
                         title={`${DAYS_SHORT[d]} ${slotToTime(s)} · ${free}/${total} free`}
                         style={{
                           width: SLOT_PX,
-                          height: 22,
+                          height: 24,
                           backgroundColor: bg,
                           borderLeft:
-                            s % 2 === 0 ? "1px solid var(--color-border)" : "none",
+                            s % 2 === 0 && i !== 0
+                              ? "1px solid rgba(27,25,23,0.05)"
+                              : "none",
                         }}
                       />
                     );
@@ -180,17 +182,17 @@ export function Results() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-2 text-[11px] text-text-3 mb-8">
+      <div className="flex items-center gap-2 text-[11px] text-text-3 mb-9">
         <span>Fewer free</span>
-        <div className="flex">
-          {[0.1, 0.3, 0.55, 1].map((a, i) => (
+        <div className="flex overflow-hidden rounded ring-1 ring-border">
+          {[0.16, 0.34, 0.56, 1].map((a, i) => (
             <div
               key={i}
               style={{
                 width: 16,
                 height: 12,
                 backgroundColor:
-                  a === 1 ? `rgb(${GREEN_RGB})` : `rgba(${GREEN_RGB}, ${a})`,
+                  a === 1 ? `rgb(${MAROON_RGB})` : `rgba(${MAROON_RGB}, ${a})`,
               }}
             />
           ))}
@@ -199,7 +201,7 @@ export function Results() {
       </div>
 
       {/* Ranked windows */}
-      <div className="text-base font-medium mb-1">
+      <div className="text-[17px] font-semibold tracking-tight mb-1">
         {total === 1 ? "When you're free" : "When everyone's free"}
       </div>
       <div className="text-[13px] text-text-2 mb-4">
@@ -225,20 +227,20 @@ export function Results() {
             return (
               <div
                 key={i}
-                className="border border-border rounded-control px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1"
+                className="relative overflow-hidden border border-border rounded-control bg-surface pl-5 pr-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 hover:border-maroon/30 hover:shadow-sm transition-all"
               >
-                <div className="w-2 h-2 rounded-full bg-green shrink-0" />
-                <div className="font-medium text-sm min-w-[84px]">
+                <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-maroon" />
+                <div className="font-semibold text-sm min-w-[84px]">
                   {DAYS[w.day]}
                 </div>
-                <div className="text-sm">
+                <div className="text-sm tabular-nums">
                   {formatTimeStr(startStr)} – {viewerEnd}
                 </div>
-                <div className="text-xs text-text-3">
+                <div className="text-xs text-text-3 bg-bg border border-border rounded-pill px-2 py-0.5">
                   {durationLabel(w.durationMins)}
                 </div>
                 {others.length > 0 && (
-                  <div className="basis-full flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-text-2 pl-6">
+                  <div className="basis-full flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-text-2 pt-0.5">
                     {others.map((p) => {
                       const ps = convertWallTimeBetweenZones(
                         w.day,
@@ -308,7 +310,7 @@ function Segmented<T extends string | number>({
           onClick={() => onChange(o.value)}
           className={`px-3 py-1.5 rounded-[7px] text-[13px] transition-colors ${
             o.value === value
-              ? "bg-green text-white font-medium"
+              ? "bg-maroon text-white font-medium"
               : "text-text-2 hover:text-text"
           }`}
         >

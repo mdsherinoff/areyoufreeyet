@@ -7,6 +7,7 @@ import { EventForm } from "./EventForm";
 import { EventList } from "./EventList";
 import { IcsImport } from "./IcsImport";
 import { TimezonePicker } from "./TimezonePicker";
+import { IconPlus, IconTrash } from "./Icons";
 
 interface PersonScheduleProps {
   person: Person;
@@ -22,7 +23,7 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
   return (
     <div className="border border-border rounded-card p-4 bg-bg">
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="w-9 h-9 rounded-full bg-green-light text-green-dark flex items-center justify-center text-[13px] font-medium shrink-0">
+        <div className="w-9 h-9 rounded-full bg-maroon text-white flex items-center justify-center text-[13px] font-semibold shrink-0">
           {initials(person.name)}
         </div>
         <input
@@ -30,7 +31,7 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
           value={person.name}
           onChange={(e) => updatePerson(person.id, { name: e.target.value })}
           placeholder="Name"
-          className="flex-1 min-w-[140px] max-w-[220px] border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green bg-white"
+          className="flex-1 min-w-[140px] max-w-[220px] border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
         />
         <TimezonePicker
           label=""
@@ -41,10 +42,10 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
           <button
             type="button"
             onClick={() => removePerson(person.id)}
-            className="ml-auto text-text-3 hover:text-red transition-colors text-sm"
+            className="ml-auto inline-flex items-center gap-1.5 text-text-3 hover:text-red hover:bg-red-light rounded-md px-2 py-1 transition-colors text-[13px]"
             title="Remove person"
           >
-            Remove
+            <IconTrash width={14} height={14} /> Remove
           </button>
         )}
       </div>
@@ -69,9 +70,9 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm font-medium text-text hover:border-maroon/40 hover:bg-maroon-light/40 transition-all active:scale-[0.98]"
           >
-            + Add event
+            <IconPlus width={15} height={15} /> Add event
           </button>
           <IcsImport onImport={(events) => addEvents(person.id, events)} />
         </div>

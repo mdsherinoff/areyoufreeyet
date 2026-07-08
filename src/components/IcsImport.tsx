@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { parseICS } from "@/lib/icsImport";
 import { BusyEvent } from "@/types";
+import { IconUpload } from "./Icons";
 
 interface IcsImportProps {
   onImport: (events: BusyEvent[]) => void;
@@ -48,10 +49,10 @@ export function IcsImport({ onImport }: IcsImportProps) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm font-medium text-text hover:border-maroon/40 hover:bg-maroon-light/40 transition-all active:scale-[0.98]"
         title="Import a .ics calendar export"
       >
-        ↥ Import .ics
+        <IconUpload width={15} height={15} /> Import .ics
       </button>
       {status && <span className="text-xs text-text-3">{status}</span>}
     </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import { createPerson } from "@/lib/factory";
 import { TimezonePicker } from "./TimezonePicker";
+import { IconPlus } from "./Icons";
 
 interface AddFriendProps {
   /** Default timezone for a new friend (usually your own). */
@@ -28,9 +29,9 @@ export function AddFriend({ defaultTimezone }: AddFriendProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm font-medium text-text hover:border-maroon/40 hover:bg-maroon-light/40 transition-all active:scale-[0.98]"
       >
-        + Add friend
+        <IconPlus width={15} height={15} /> Add friend
       </button>
     );
   }
@@ -46,7 +47,7 @@ export function AddFriend({ defaultTimezone }: AddFriendProps) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="e.g. Sam"
-          className="w-full border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green bg-white"
+          className="w-full border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
         />
       </div>
       <TimezonePicker label="" value={timezone} onChange={setTimezone} />
@@ -61,7 +62,7 @@ export function AddFriend({ defaultTimezone }: AddFriendProps) {
         <button
           type="button"
           onClick={submit}
-          className="px-4 py-2 rounded-control bg-green text-white text-sm font-medium hover:bg-green-dark transition-colors"
+          className="px-4 py-2 rounded-control bg-maroon text-white text-sm font-medium hover:bg-maroon-dark transition-colors"
         >
           Add
         </button>

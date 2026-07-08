@@ -7,6 +7,7 @@ import { AddFriend } from "@/components/AddFriend";
 import { Results } from "@/components/Results";
 import { StepNav, Step } from "@/components/StepNav";
 import { ShareButton } from "@/components/ShareButton";
+import { IconArrowLeft, IconArrowRight } from "@/components/Icons";
 
 export default function Home() {
   const { session, ready, joinedFromLink } = useSession();
@@ -26,16 +27,21 @@ export default function Home() {
   return (
     <div className="max-w-[780px] mx-auto px-5 py-8 pb-16">
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-4 flex-wrap mb-10">
-        <div className="text-[22px] font-medium tracking-tight">
-          Are<span className="text-green">You</span>FreeYet
-          <span className="inline-block w-[7px] h-[7px] bg-green rounded-full ml-px relative -top-0.5" />
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-9">
+        <div>
+          <div className="text-[23px] font-semibold tracking-tight leading-none">
+            Are<span className="text-maroon">You</span>FreeYet
+            <span className="inline-block w-[6px] h-[6px] bg-maroon rounded-full ml-0.5 relative -top-[1px]" />
+          </div>
+          <div className="text-[13px] text-text-2 mt-1.5">
+            Find time that works for everyone.
+          </div>
         </div>
         <ShareButton />
       </div>
 
       {joinedFromLink && (
-        <div className="bg-green-light text-green-dark border border-green-mid/40 rounded-card px-4 py-3 mb-6 text-[13px]">
+        <div className="bg-maroon-light text-maroon-dark border border-maroon-mid/40 rounded-card px-4 py-3 mb-6 text-[13px]">
           You&apos;ve opened a shared plan with {session.people.length}{" "}
           {session.people.length === 1 ? "person" : "people"}. Add yourself under{" "}
           <button
@@ -64,9 +70,7 @@ export default function Home() {
               <div className="text-text-3 text-sm">No one here yet.</div>
             )}
           </Card>
-          <FooterNav
-            next={{ label: "Add friends →", onClick: () => setStep(2) }}
-          />
+          <FooterNav next={{ label: "Add friends", onClick: () => setStep(2) }} />
         </>
       )}
 
@@ -93,8 +97,8 @@ export default function Home() {
             </div>
           </Card>
           <FooterNav
-            back={{ label: "← Back", onClick: () => setStep(1) }}
-            next={{ label: "See results →", onClick: () => setStep(3) }}
+            back={{ label: "Back", onClick: () => setStep(1) }}
+            next={{ label: "See results", onClick: () => setStep(3) }}
           />
         </>
       )}
@@ -104,11 +108,11 @@ export default function Home() {
         <>
           <Card
             title="Results"
-            subtitle="The overlap of everyone's schedules — greener means more people free."
+            subtitle="The overlap of everyone's schedules — the deeper the shade, the more people free."
           >
             <Results />
           </Card>
-          <FooterNav back={{ label: "← Back", onClick: () => setStep(2) }} />
+          <FooterNav back={{ label: "Back", onClick: () => setStep(2) }} />
         </>
       )}
     </div>
@@ -125,9 +129,11 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface border border-border rounded-card p-6 mb-4 shadow-card">
-      <div className="text-base font-medium mb-1">{title}</div>
-      <div className="text-[13px] text-text-2 mb-5">{subtitle}</div>
+    <div className="bg-surface border border-border rounded-card p-6 sm:p-7 mb-4 shadow-card">
+      <div className="text-[17px] font-semibold tracking-tight mb-1">{title}</div>
+      <div className="text-[13px] text-text-2 mb-6 leading-relaxed max-w-[56ch]">
+        {subtitle}
+      </div>
       {children}
     </div>
   );
@@ -146,9 +152,9 @@ function FooterNav({
         <button
           type="button"
           onClick={back.onClick}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control border border-border-mid bg-surface text-sm hover:bg-bg transition-colors"
+          className="inline-flex items-center gap-1.5 pl-3 pr-4 py-2 rounded-control border border-border-mid bg-surface text-sm font-medium text-text hover:border-maroon/40 hover:bg-maroon-light/40 transition-all active:scale-[0.98]"
         >
-          {back.label}
+          <IconArrowLeft width={16} height={16} /> {back.label}
         </button>
       ) : (
         <span />
@@ -157,9 +163,9 @@ function FooterNav({
         <button
           type="button"
           onClick={next.onClick}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-control bg-green text-white font-medium text-sm hover:bg-green-dark transition-colors"
+          className="inline-flex items-center gap-1.5 pl-4 pr-3 py-2 rounded-control bg-maroon text-white font-medium text-sm shadow-sm hover:bg-maroon-dark transition-all active:scale-[0.98]"
         >
-          {next.label}
+          {next.label} <IconArrowRight width={16} height={16} />
         </button>
       )}
     </div>

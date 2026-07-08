@@ -77,7 +77,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
           placeholder="e.g. Maths lecture"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green bg-white"
+          className="w-full border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
         />
       </div>
 
@@ -89,7 +89,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
             onClick={() => setType("recurring")}
             className={`flex-1 py-2 rounded-control text-sm border transition-colors ${
               type === "recurring"
-                ? "bg-green text-white border-green"
+                ? "bg-maroon text-white border-maroon"
                 : "bg-white border-border-mid text-text-2"
             }`}
           >
@@ -100,7 +100,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
             onClick={() => setType("once")}
             className={`flex-1 py-2 rounded-control text-sm border transition-colors ${
               type === "once"
-                ? "bg-green text-white border-green"
+                ? "bg-maroon text-white border-maroon"
                 : "bg-white border-border-mid text-text-2"
             }`}
           >
@@ -119,7 +119,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
               onClick={() => toggleDay(i)}
               className={`w-9 h-9 rounded-full text-xs font-medium border transition-colors ${
                 days.includes(i)
-                  ? "bg-green text-white border-green"
+                  ? "bg-maroon text-white border-maroon"
                   : "bg-white border-border-mid text-text-2"
               }`}
             >
@@ -136,7 +136,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green bg-white"
+            className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
           />
         </div>
         <div>
@@ -145,7 +145,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-green bg-white"
+            className="border border-border-mid rounded-control px-3 py-2 text-sm outline-none focus:border-maroon bg-white"
           />
         </div>
         {overnight && (
@@ -166,7 +166,7 @@ export function EventForm({ timezone, onAdd, onCancel }: EventFormProps) {
         <button
           type="button"
           onClick={handleSubmit}
-          className="px-4 py-2 rounded-control bg-green text-white text-sm font-medium hover:bg-green-dark transition-colors"
+          className="px-4 py-2 rounded-control bg-maroon text-white text-sm font-medium hover:bg-maroon-dark transition-colors"
         >
           Add
         </button>

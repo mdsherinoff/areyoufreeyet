@@ -21,7 +21,7 @@ export function TimezonePicker({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="border border-border-mid rounded-control px-2.5 py-1.5 text-sm bg-white outline-none focus:border-green"
+        className="border border-border-mid rounded-control px-2.5 py-1.5 text-sm bg-white outline-none focus:border-maroon"
       >
         {/* Keep an unlisted tz (e.g. detected or from a shared link) selectable. */}
         {value && !COMMON_TIMEZONES.includes(value) && (
