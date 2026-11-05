@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import { PersonSchedule } from "@/components/PersonSchedule";
 import { AddFriend } from "@/components/AddFriend";
 import { Results } from "@/components/Results";
 import { StepNav, Step } from "@/components/StepNav";
 import { ShareButton } from "@/components/ShareButton";
-import { IconArrowLeft, IconArrowRight } from "@/components/Icons";
+import { Toaster } from "@/components/Toaster";
+import { IconArrowLeft, IconArrowRight, IconClose } from "@/components/Icons";
+
+const STEP_KEY = "areyoufreeyet:step";
 
 const STEP_META: Record<Step, { num: string; title: string; blurb: string }> = {
   1: {
@@ -30,12 +33,55 @@ const STEP_META: Record<Step, { num: string; title: string; blurb: string }> = {
 
 export default function Home() {
   const { session, ready, joinedFromLink } = useSession();
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStepState] = useState<Step>(1);
+  const [bannerOpen, setBannerOpen] = useState(true);
+  const [newFriendId, setNewFriendId] = useState<string | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Restore the last step on reload; a fresh shared link lands on Friends so
+  // the visitor can add themselves straight away.
+  useEffect(() => {
+    if (!ready) return;
+    let saved: Step | null = null;
+    try {
+      const n = Number(window.localStorage.getItem(STEP_KEY));
+      if (n === 1 || n === 2 || n === 3) saved = n;
+    } catch {
+      /* storage blocked — start at step 1 */
+    }
+    const initial = joinedFromLink ? 2 : saved;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initial) setStepState(initial);
+  }, [ready, joinedFromLink]);
+
+  const setStep = (next: Step) => {
+    setStepState(next);
+    try {
+      window.localStorage.setItem(STEP_KEY, String(next));
+    } catch {
+      /* non-fatal */
+    }
+    // Keep the step tabs in view when moving between steps from the footer.
+    const nav = navRef.current;
+    if (nav && nav.getBoundingClientRect().top < 0) {
+      nav.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Scroll a just-added friend's card into view.
+  useEffect(() => {
+    if (!newFriendId) return;
+    document
+      .getElementById(`person-${newFriendId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [newFriendId]);
 
   if (!ready) {
     return (
-      <div className="mx-auto w-full max-w-[900px] px-6 py-16">
-        <div className="eyebrow">Loading…</div>
+      <div className="mx-auto w-full max-w-[900px] px-6 py-14 sm:py-16" aria-busy>
+        <div className="h-[132px] w-[300px] max-w-full animate-pulse bg-border/60" />
+        <div className="rule-bold mt-10 opacity-30" />
+        <div className="mt-10 h-[280px] animate-pulse border border-border bg-surface/60" />
       </div>
     );
   }
@@ -62,10 +108,16 @@ export default function Home() {
         <div className="rule-bold mt-5" />
       </header>
 
-      <StepNav current={step} onChange={setStep} />
+      <StepNav
+        ref={navRef}
+        current={step}
+        onChange={setStep}
+        counts={{ 1: you?.events.length ?? 0, 2: friends.length }}
+      />
 
-      {joinedFromLink && (
-        <div className="mb-10 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-l-2 border-maroon pl-4 text-[13px]">
+      {joinedFromLink && bannerOpen && (
+        <div className="mb-10 flex items-start gap-3 border-l-2 border-maroon pl-4 text-[13px]">
+        <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="eyebrow text-maroon">Shared plan</span>
           <span className="text-text-2">
             You&apos;ve joined a plan with {session.people.length}{" "}
@@ -81,20 +133,27 @@ export default function Home() {
             , then re-share.
           </span>
         </div>
+          <button
+            type="button"
+            onClick={() => setBannerOpen(false)}
+            aria-label="Dismiss"
+            className="shrink-0 p-0.5 text-text-3 transition-colors hover:text-text"
+          >
+            <IconClose width={14} height={14} />
+          </button>
+        </div>
       )}
 
       {/* Active section */}
       <section className="mb-12">
-        <div className="flex items-baseline gap-4">
-          <span className="font-mono text-[15px] text-maroon">{meta.num}</span>
-          <h2 className="display uppercase text-[clamp(26px,5vw,34px)]">
-            {meta.title}
-          </h2>
-        </div>
+        <div className="eyebrow text-maroon">Step {meta.num} / 03</div>
+        <h2 className="display mt-2 uppercase text-[clamp(26px,5vw,34px)]">
+          {meta.title}
+        </h2>
         <p className="mt-3 max-w-[60ch] text-[14px] leading-relaxed text-text-2">
           {meta.blurb}
         </p>
-        <div className="rule mt-6 pt-8">
+        <div className="mt-8">
           {step === 1 &&
             (you ? (
               <PersonSchedule person={you} />
@@ -105,8 +164,10 @@ export default function Home() {
           {step === 2 && (
             <div className="flex flex-col gap-8">
               {friends.length === 0 ? (
-                <div className="border border-dashed border-border-mid px-6 py-10 text-center">
-                  <div className="eyebrow mb-2">No friends yet</div>
+                <div className="border border-dashed border-border-mid bg-surface/40 px-6 py-12 text-center">
+                  <div className="display mb-2 text-[22px] uppercase text-text-3">
+                    Just you so far
+                  </div>
                   <div className="text-[13px] text-text-2">
                     Add someone below, or share the link so they add themselves.
                   </div>
@@ -117,18 +178,21 @@ export default function Home() {
                 ))
               )}
               <div className="flex flex-wrap items-center gap-3">
-                <AddFriend defaultTimezone={you?.timezone ?? "UTC"} />
-                <ShareButton />
+                <AddFriend
+                  defaultTimezone={you?.timezone ?? "UTC"}
+                  onAdded={setNewFriendId}
+                />
+                <ShareButton label="Invite via link" />
               </div>
             </div>
           )}
 
-          {step === 3 && <Results />}
+          {step === 3 && <Results onAddFriends={() => setStep(2)} />}
         </div>
       </section>
 
       {/* Footer nav */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
         {step > 1 ? (
           <button
             type="button"
@@ -152,7 +216,11 @@ export default function Home() {
             className="group inline-flex items-center gap-2.5 bg-maroon px-6 py-3 text-white transition-all hover:bg-maroon-dark active:scale-[0.98]"
           >
             <span className="font-mono text-[12px] uppercase tracking-[0.14em]">
-              {step === 1 ? "Add friends" : "See results"}
+              {step === 1
+                ? "Next: friends"
+                : friends.length === 0
+                  ? "Skip to results"
+                  : "See results"}
             </span>
             <IconArrowRight
               width={16}
@@ -162,6 +230,8 @@ export default function Home() {
           </button>
         )}
       </div>
+
+      <Toaster />
     </div>
   );
 }

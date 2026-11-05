@@ -1,5 +1,8 @@
 "use client";
 
+import type { Ref } from "react";
+import { IconCheck } from "./Icons";
+
 export type Step = 1 | 2 | 3;
 
 const STEPS: { n: Step; num: string; label: string }[] = [
@@ -11,33 +14,42 @@ const STEPS: { n: Step; num: string; label: string }[] = [
 interface StepNavProps {
   current: Step;
   onChange: (step: Step) => void;
+  /** Optional small count shown next to each step label. */
+  counts?: Partial<Record<Step, number>>;
+  ref?: Ref<HTMLElement>;
 }
 
-export function StepNav({ current, onChange }: StepNavProps) {
+export function StepNav({ current, onChange, counts = {}, ref }: StepNavProps) {
   return (
-    <nav className="mt-8 mb-10 flex gap-6 sm:gap-9 border-b border-border">
+    <nav
+      ref={ref}
+      aria-label="Steps"
+      className="mt-8 mb-10 scroll-mt-4 grid grid-cols-3 border-b border-border"
+    >
       {STEPS.map(({ n, num, label }) => {
         const active = n === current;
         const done = n < current;
+        const count = counts[n];
         return (
           <button
             key={n}
             type="button"
             onClick={() => onChange(n)}
-            className={`group -mb-px flex items-baseline gap-2 border-b-2 pb-3.5 transition-colors ${
-              active ? "border-maroon" : "border-transparent"
+            aria-current={active ? "step" : undefined}
+            className={`group -mb-px flex flex-col items-start gap-1 border-b-2 pb-3.5 pr-2 text-left transition-colors sm:flex-row sm:items-center sm:gap-2.5 ${
+              active ? "border-maroon" : "border-transparent hover:border-border-mid"
             }`}
           >
             <span
-              className={`font-mono text-[12px] ${
+              className={`flex h-6 w-6 shrink-0 items-center justify-center font-mono text-[11px] transition-colors ${
                 active
-                  ? "text-maroon"
+                  ? "bg-maroon text-white"
                   : done
-                    ? "text-text-2"
-                    : "text-text-3"
+                    ? "bg-maroon-light text-maroon"
+                    : "border border-border-mid text-text-3"
               }`}
             >
-              {num}
+              {done ? <IconCheck width={12} height={12} strokeWidth={3} /> : num}
             </span>
             <span
               className={`font-display text-[14px] font-semibold tracking-tight ${
@@ -48,6 +60,15 @@ export function StepNav({ current, onChange }: StepNavProps) {
             >
               {label}
             </span>
+            {count !== undefined && count > 0 && (
+              <span
+                className={`hidden font-mono text-[11px] tabular-nums sm:inline ${
+                  active ? "text-maroon" : "text-text-3"
+                }`}
+              >
+                {count}
+              </span>
+            )}
           </button>
         );
       })}
