@@ -7,6 +7,7 @@ import { EventForm } from "./EventForm";
 import { EventList } from "./EventList";
 import { IcsImport } from "./IcsImport";
 import { TimezonePicker } from "./TimezonePicker";
+import { WeekStrip } from "./WeekStrip";
 import { IconPlus, IconTrash } from "./Icons";
 
 interface PersonScheduleProps {
@@ -21,7 +22,7 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <div>
+    <div className="border border-border bg-surface/60 p-5 shadow-card sm:p-6">
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-maroon font-mono text-sm font-medium text-white">
           {initials(person.name)}
@@ -31,7 +32,8 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
           value={person.name}
           onChange={(e) => updatePerson(person.id, { name: e.target.value })}
           placeholder="Name"
-          className="min-w-[120px] max-w-[240px] flex-1 border-b-2 border-border bg-transparent pb-1 font-display text-xl font-bold tracking-tight outline-none transition-colors focus:border-maroon"
+          aria-label="Name"
+          className="min-w-[120px] max-w-[240px] flex-1 border-b-2 border-transparent hover:border-border bg-transparent pb-1 font-display text-xl font-bold tracking-tight outline-none transition-colors focus:border-maroon"
         />
         <div className="ml-auto flex items-center gap-4">
           <TimezonePicker
@@ -51,6 +53,10 @@ export function PersonSchedule({ person, removable }: PersonScheduleProps) {
             </button>
           )}
         </div>
+      </div>
+
+      <div className="mt-5">
+        <WeekStrip person={person} />
       </div>
 
       <div className="mt-5">

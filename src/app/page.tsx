@@ -62,7 +62,11 @@ export default function Home() {
         <div className="rule-bold mt-5" />
       </header>
 
-      <StepNav current={step} onChange={setStep} />
+      <StepNav
+        current={step}
+        onChange={setStep}
+        counts={{ 1: you?.events.length ?? 0, 2: friends.length }}
+      />
 
       {joinedFromLink && (
         <div className="mb-10 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-l-2 border-maroon pl-4 text-[13px]">
@@ -85,16 +89,14 @@ export default function Home() {
 
       {/* Active section */}
       <section className="mb-12">
-        <div className="flex items-baseline gap-4">
-          <span className="font-mono text-[15px] text-maroon">{meta.num}</span>
-          <h2 className="display uppercase text-[clamp(26px,5vw,34px)]">
-            {meta.title}
-          </h2>
-        </div>
+        <div className="eyebrow text-maroon">Step {meta.num} / 03</div>
+        <h2 className="display mt-2 uppercase text-[clamp(26px,5vw,34px)]">
+          {meta.title}
+        </h2>
         <p className="mt-3 max-w-[60ch] text-[14px] leading-relaxed text-text-2">
           {meta.blurb}
         </p>
-        <div className="rule mt-6 pt-8">
+        <div className="mt-8">
           {step === 1 &&
             (you ? (
               <PersonSchedule person={you} />
@@ -105,8 +107,10 @@ export default function Home() {
           {step === 2 && (
             <div className="flex flex-col gap-8">
               {friends.length === 0 ? (
-                <div className="border border-dashed border-border-mid px-6 py-10 text-center">
-                  <div className="eyebrow mb-2">No friends yet</div>
+                <div className="border border-dashed border-border-mid bg-surface/40 px-6 py-12 text-center">
+                  <div className="display mb-2 text-[22px] uppercase text-text-3">
+                    Just you so far
+                  </div>
                   <div className="text-[13px] text-text-2">
                     Add someone below, or share the link so they add themselves.
                   </div>
@@ -128,7 +132,7 @@ export default function Home() {
       </section>
 
       {/* Footer nav */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
         {step > 1 ? (
           <button
             type="button"
@@ -152,7 +156,7 @@ export default function Home() {
             className="group inline-flex items-center gap-2.5 bg-maroon px-6 py-3 text-white transition-all hover:bg-maroon-dark active:scale-[0.98]"
           >
             <span className="font-mono text-[12px] uppercase tracking-[0.14em]">
-              {step === 1 ? "Add friends" : "See results"}
+              {step === 1 ? "Next: friends" : "See results"}
             </span>
             <IconArrowRight
               width={16}
