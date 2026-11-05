@@ -116,3 +116,39 @@ input[type="text"],
 select {
   accent-color: var(--color-maroon);
 }
+
+/* Visible keyboard focus everywhere, without rings on mouse clicks */
+:where(button, a, select, [role="radio"]):focus-visible {
+  outline: 2px solid var(--color-maroon);
+  outline-offset: 2px;
+}
+
+button:not(:disabled),
+select {
+  cursor: pointer;
+}
+
+/* Toast entrance */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.toast-in {
+  animation: toast-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

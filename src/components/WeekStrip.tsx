@@ -14,7 +14,14 @@ const HOUR_MARKS = [0, 6, 12, 18, 24];
  * time drawn as solid blocks. Rendered in the person's own timezone so it
  * matches the times they typed.
  */
-export function WeekStrip({ person }: { person: Person }) {
+export function WeekStrip({
+  person,
+  onPick,
+}: {
+  person: Person;
+  /** Called with a day and half-hour slot when a free spot is clicked. */
+  onPick?: (day: number, slot: number) => void;
+}) {
   const matrix = useMemo(
     () => buildBusyMatrix(localizePerson(person, person.timezone)),
     [person],
@@ -45,7 +52,12 @@ export function WeekStrip({ person }: { person: Person }) {
   return (
     <div className="border border-border bg-surface px-4 pb-3 pt-3.5">
       <div className="mb-2.5 flex items-baseline justify-between">
-        <span className="eyebrow">Week at a glance</span>
+        <span className="eyebrow">
+          Week at a glance
+          {onPick && (
+            <span className="hidden text-text-3 sm:inline"> · click to add</span>
+          )}
+        </span>
         <span className="eyebrow">
           <span className="text-text">{busyHours}h</span> busy
         </span>
@@ -56,19 +68,34 @@ export function WeekStrip({ person }: { person: Person }) {
             <span className="w-7 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-text-2">
               {DAYS_SHORT[d]}
             </span>
-            <div className="relative h-[10px] flex-1 bg-bg">
+            <div
+              className={`relative h-[12px] flex-1 bg-bg ${
+                onPick ? "cursor-copy transition-colors hover:bg-maroon-light" : ""
+              }`}
+              onClick={
+                onPick
+                  ? (e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      const frac = (e.clientX - r.left) / r.width;
+                      // Snap to the hour so the prefilled event is tidy.
+                      const slot = Math.floor(frac * 24) * 2;
+                      onPick(d, Math.min(Math.max(slot, 0), SLOTS_PER_DAY - 2));
+                    }
+                  : undefined
+              }
+            >
               {/* faint 6-hour guides */}
               {[6, 12, 18].map((h) => (
                 <span
                   key={h}
-                  className="absolute inset-y-0 w-px bg-border"
+                  className="pointer-events-none absolute inset-y-0 w-px bg-border"
                   style={{ left: `${(h / 24) * 100}%` }}
                 />
               ))}
               {dayRuns.map((r) => (
                 <span
                   key={r.start}
-                  className="absolute inset-y-0 bg-maroon"
+                  className="pointer-events-none absolute inset-y-0 bg-maroon"
                   style={{
                     left: `${(r.start / SLOTS_PER_DAY) * 100}%`,
                     width: `${(r.len / SLOTS_PER_DAY) * 100}%`,

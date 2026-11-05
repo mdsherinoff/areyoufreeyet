@@ -23,6 +23,7 @@ import {
   formatHourLabel,
   durationLabel,
 } from "@/lib/time";
+import { IconCopy } from "./Icons";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -42,13 +43,19 @@ const FILTER_OPTIONS: { label: string; value: DayFilter }[] = [
   { label: "Weekend", value: "weekend" },
 ];
 
-export function Results() {
-  const { session } = useSession();
+interface ResultsProps {
+  /** Jump to the Friends step (shown when you're the only one here). */
+  onAddFriends?: () => void;
+}
+
+export function Results({ onAddFriends }: ResultsProps) {
+  const { session, notify } = useSession();
   const people = session.people;
   const viewerTz = people[0]?.timezone ?? "UTC";
 
   const [minBlockHours, setMinBlockHours] = useState(1);
   const [dayFilter, setDayFilter] = useState<DayFilter>("all");
+  const [hover, setHover] = useState<{ d: number; s: number } | null>(null);
 
   // Localize everyone to the viewer's timezone, then build the busy matrices
   // so the whole results view is computed and drawn in one consistent zone.
@@ -131,6 +138,32 @@ export function Results() {
   const fmt = (w: FreeWindow) => windowTimes(w, viewerTz, others);
   const bestT = best ? fmt(best) : null;
 
+  const copyBest = async () => {
+    if (!best || !bestT) return;
+    const when = bestT.allDay ? "all day" : `${bestT.start} – ${bestT.end}`;
+    const lines = [
+      `How about ${DAYS[best.day]}, ${when} (${tzLabel(viewerTz)})?`,
+      ...bestT.others.map((o) => `${o.name}: ${o.start} – ${o.end} ${o.tz}`),
+    ];
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      notify("Copied — paste it into your group chat");
+    } catch {
+      window.prompt("Copy this:", lines.join("\n"));
+    }
+  };
+
+  // Who's busy in the hovered heatmap cell.
+  const hoverInfo = hover
+    ? {
+        label: `${DAYS_SHORT[hover.d]} ${formatTimeStr(slotToTime(hover.s))}–${formatTimeStr(slotToTime((hover.s + 1) % SLOTS_PER_DAY))}`,
+        free: freeCounts[hover.d][hover.s],
+        busy: people
+          .filter((_, i) => matrices[i][hover.d][hover.s])
+          .map((p) => p.name || "Someone"),
+      }
+    : null;
+
   return (
     <div>
       {/* Controls */}
@@ -150,6 +183,23 @@ export function Results() {
           />
         </Control>
       </div>
+
+      {total === 1 && (
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border border-dashed border-border-mid bg-surface/40 px-5 py-4">
+          <span className="text-[13px] text-text-2">
+            It&apos;s just you so far — these are your own free times.
+          </span>
+          {onAddFriends && (
+            <button
+              type="button"
+              onClick={onAddFriends}
+              className="font-mono text-[12px] uppercase tracking-[0.14em] text-maroon underline-offset-4 hover:underline"
+            >
+              Add friends →
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Best bet */}
       {best && bestT && (
@@ -179,6 +229,13 @@ export function Results() {
                 ))}
               </div>
             )}
+            <button
+              type="button"
+              onClick={copyBest}
+              className="mt-5 inline-flex items-center gap-2 border border-white/60 px-4 py-2 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors hover:bg-white hover:text-maroon active:scale-[0.98]"
+            >
+              <IconCopy width={14} height={14} /> Copy for group chat
+            </button>
           </div>
           <div className="flex gap-6 border-t border-white/20 pt-4 sm:flex-col sm:gap-3 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
             <Stat value={String(windows.length)} label="windows" />
@@ -195,7 +252,10 @@ export function Results() {
           Times in <span className="text-maroon">{tzLabel(viewerTz)}</span>
         </span>
       </div>
-      <div className="mb-3 overflow-x-auto border border-border bg-surface p-4">
+      <div
+        className="overflow-x-auto border border-border bg-surface p-4"
+        onMouseLeave={() => setHover(null)}
+      >
         <div className="min-w-[520px]">
           {/* Hour ruler */}
           <div
@@ -239,11 +299,15 @@ export function Results() {
                     const bg = all
                       ? `rgb(${MAROON_RGB})`
                       : `rgba(${MAROON_RGB}, ${(frac * 0.45 + (frac > 0 ? 0.06 : 0)).toFixed(3)})`;
+                    const hovered = hover?.d === d && hover?.s === s;
                     return (
                       <div
                         key={s}
-                        title={`${DAYS_SHORT[d]} ${formatTimeStr(slotToTime(s))} · ${free}/${total} free`}
-                        className="h-7 transition-[filter] hover:brightness-90"
+                        onMouseEnter={() => setHover({ d, s })}
+                        onClick={() => setHover({ d, s })}
+                        className={`h-7 transition-[filter] hover:brightness-90 ${
+                          hovered ? "outline-2 -outline-offset-2 outline-text" : ""
+                        }`}
                         style={{
                           backgroundColor: bg,
                           boxShadow:
@@ -261,8 +325,40 @@ export function Results() {
         </div>
       </div>
 
+      {/* Hover readout — who's free in the cell under the pointer */}
+      <div
+        aria-live="polite"
+        className="flex min-h-[44px] flex-wrap items-baseline gap-x-3 gap-y-1 border-x border-b border-border bg-bg px-4 py-2.5 text-[12px]"
+      >
+        {hoverInfo ? (
+          <>
+            <span className="font-mono tabular-nums text-text">
+              {hoverInfo.label}
+            </span>
+            <span
+              className={`eyebrow ${hoverInfo.free === total ? "text-maroon" : ""}`}
+            >
+              {hoverInfo.free === total
+                ? total === 1
+                  ? "Free"
+                  : "Everyone free"
+                : `${hoverInfo.free} of ${total} free`}
+            </span>
+            {hoverInfo.busy.length > 0 && (
+              <span className="text-text-2">
+                Busy: {hoverInfo.busy.join(", ")}
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="eyebrow text-text-3">
+            Hover or tap the map to see who&apos;s busy
+          </span>
+        )}
+      </div>
+
       {/* Legend */}
-      <div className="mb-12 flex items-center gap-2">
+      <div className="mb-12 mt-3 flex items-center gap-2">
         <span className="eyebrow">Fewer free</span>
         <div className="flex">
           {[0.12, 0.28, 0.45, 1].map((a, i) => (
@@ -297,7 +393,28 @@ export function Results() {
             Nothing lines up
           </div>
           <div className="text-[13px] text-text-2">
-            Try a shorter minimum block or a different day filter.
+            Try loosening the filters
+            {total > 1 ? ", or check the overlap map for near-misses" : ""}.
+          </div>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            {minBlockHours > 0.5 && (
+              <button
+                type="button"
+                onClick={() => setMinBlockHours(0.5)}
+                className="border border-text px-4 py-2 text-[13px] font-medium transition-colors hover:border-maroon hover:bg-maroon hover:text-white"
+              >
+                Try 30 min blocks
+              </button>
+            )}
+            {dayFilter !== "all" && (
+              <button
+                type="button"
+                onClick={() => setDayFilter("all")}
+                className="border border-text px-4 py-2 text-[13px] font-medium transition-colors hover:border-maroon hover:bg-maroon hover:text-white"
+              >
+                Show all days
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -448,6 +565,7 @@ function Segmented<T extends string | number>({
           key={String(o.value)}
           type="button"
           onClick={() => onChange(o.value)}
+          aria-pressed={o.value === value}
           className={`px-3.5 py-2 text-[12px] font-medium transition-colors ${
             idx > 0 ? "border-l border-border-mid" : ""
           } ${

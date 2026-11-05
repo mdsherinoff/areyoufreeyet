@@ -1,5 +1,6 @@
 "use client";
 
+import type { Ref } from "react";
 import { IconCheck } from "./Icons";
 
 export type Step = 1 | 2 | 3;
@@ -15,13 +16,15 @@ interface StepNavProps {
   onChange: (step: Step) => void;
   /** Optional small count shown next to each step label. */
   counts?: Partial<Record<Step, number>>;
+  ref?: Ref<HTMLElement>;
 }
 
-export function StepNav({ current, onChange, counts = {} }: StepNavProps) {
+export function StepNav({ current, onChange, counts = {}, ref }: StepNavProps) {
   return (
     <nav
+      ref={ref}
       aria-label="Steps"
-      className="mt-8 mb-10 grid grid-cols-3 border-b border-border"
+      className="mt-8 mb-10 scroll-mt-4 grid grid-cols-3 border-b border-border"
     >
       {STEPS.map(({ n, num, label }) => {
         const active = n === current;

@@ -86,3 +86,12 @@ export function IconTrash(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function IconCopy(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <rect x="9" y="9" width="11" height="11" rx="1" />
+      <path d="M5 15V5a1 1 0 011-1h10" />
+    </svg>
+  );
+}
