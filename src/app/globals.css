@@ -7,9 +7,9 @@
   --color-maroon-mid: #b1546b;
   --color-maroon-dark: #6b0f2b;
 
-  --color-red: #cf3a4f;
+  --color-red: #b42a40;
   --color-red-light: #fbe8ea;
-  --color-amber: #b9791b;
+  --color-amber: #8c5a0f;
   --color-amber-light: #f6efdf;
 
   --color-bg: #faf8f7;
@@ -18,7 +18,8 @@
   --color-border-mid: #d7d0ca;
   --color-text: #1b1917;
   --color-text-2: #6a655f;
-  --color-text-3: #a49e97;
+  /* ≥4.5:1 on bg/surface so tertiary text stays legible (WCAG AA) */
+  --color-text-3: #736d67;
 
   --radius-card: 16px;
   --radius-control: 10px;
@@ -118,9 +119,38 @@ select {
 }
 
 /* Visible keyboard focus everywhere, without rings on mouse clicks */
-:where(button, a, select, [role="radio"]):focus-visible {
+:where(button, a, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--color-maroon);
   outline-offset: 2px;
+}
+/* Text inputs show focus via their underline; thicken it so it's unmistakable */
+:where(input[type="text"], input[type="time"]):focus-visible {
+  border-bottom-color: var(--color-maroon);
+  box-shadow: 0 1px 0 0 var(--color-maroon);
+}
+/* On dark/maroon surfaces a maroon ring would vanish — flip it to white */
+.on-dark :where(button, a, [tabindex]):focus-visible {
+  outline-color: #fff;
+}
+/* Programmatic focus targets (headings after a step change) need no ring */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Skip link: hidden until focused */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  background: var(--color-maroon);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  font-size: 13px;
+  font-weight: 500;
+}
+.skip-link:focus {
+  top: 1rem;
 }
 
 button:not(:disabled),

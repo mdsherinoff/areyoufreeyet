@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import {
   buildBusyMatrix,
@@ -56,6 +56,7 @@ export function Results({ onAddFriends }: ResultsProps) {
   const [minBlockHours, setMinBlockHours] = useState(1);
   const [dayFilter, setDayFilter] = useState<DayFilter>("all");
   const [hover, setHover] = useState<{ d: number; s: number } | null>(null);
+  const mapHelpId = useId();
 
   // Localize everyone to the viewer's timezone, then build the busy matrices
   // so the whole results view is computed and drawn in one consistent zone.
@@ -164,11 +165,46 @@ export function Results({ onAddFriends }: ResultsProps) {
       }
     : null;
 
+  // Keyboard exploration of the heatmap: arrows move a cursor cell and the
+  // readout below (a live region) announces who's free there.
+  const onMapKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setHover(null);
+      return;
+    }
+    const move: Record<string, (c: { d: number; s: number }) => { d: number; s: number }> = {
+      ArrowRight: (c) => ({ d: c.d, s: Math.min(c.s + 1, rangeEnd - 1) }),
+      ArrowLeft: (c) => ({ d: c.d, s: Math.max(c.s - 1, rangeStart) }),
+      ArrowDown: (c) => ({
+        d: visibleDays[Math.min(visibleDays.indexOf(c.d) + 1, visibleDays.length - 1)],
+        s: c.s,
+      }),
+      ArrowUp: (c) => ({
+        d: visibleDays[Math.max(visibleDays.indexOf(c.d) - 1, 0)],
+        s: c.s,
+      }),
+      Home: (c) => ({ d: c.d, s: rangeStart }),
+      End: (c) => ({ d: c.d, s: rangeEnd - 1 }),
+    };
+    const fn = move[e.key];
+    if (!fn) return;
+    e.preventDefault();
+    // Functional update so fast repeated keys each build on the latest cell.
+    setHover((prev) => {
+      const cur =
+        prev && visibleDays.includes(prev.d) ? prev : { d: visibleDays[0], s: rangeStart };
+      return fn(cur);
+    });
+  };
+  // If the day filter hides the cursor's day, drop it.
+  const hoverVisible =
+    hover && visibleDays.includes(hover.d) && hover.s >= rangeStart && hover.s < rangeEnd;
+
   return (
     <div>
       {/* Controls */}
       <div className="mb-8 flex flex-wrap items-start gap-x-10 gap-y-4">
-        <Control label="Min free block">
+        <Control label="Minimum free block">
           <Segmented
             options={BLOCK_OPTIONS}
             value={minBlockHours}
@@ -195,7 +231,7 @@ export function Results({ onAddFriends }: ResultsProps) {
               onClick={onAddFriends}
               className="font-mono text-[12px] uppercase tracking-[0.14em] text-maroon underline-offset-4 hover:underline"
             >
-              Add friends →
+              Add friends <span aria-hidden="true">→</span>
             </button>
           )}
         </div>
@@ -203,7 +239,10 @@ export function Results({ onAddFriends }: ResultsProps) {
 
       {/* Best bet */}
       {best && bestT && (
-        <div className="mb-10 grid gap-6 bg-maroon p-6 text-white shadow-pop sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
+        <section
+          aria-label="Best bet"
+          className="on-dark mb-10 grid gap-6 bg-maroon p-6 text-white shadow-pop sm:grid-cols-[1fr_auto] sm:items-end sm:p-8"
+        >
           <div>
             <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/70">
               Best bet{total > 1 ? " · everyone free" : ""}
@@ -212,9 +251,14 @@ export function Results({ onAddFriends }: ResultsProps) {
               {DAYS[best.day]}
             </div>
             <div className="mt-2 font-mono text-[18px] tabular-nums sm:text-[20px]">
-              {bestT.allDay
-                ? "All day"
-                : `${bestT.start} – ${bestT.end}`}
+              {bestT.allDay ? (
+                "All day"
+              ) : (
+                <>
+                  {bestT.start} <span aria-hidden="true">–</span>
+                  <span className="sr-only">to</span> {bestT.end}
+                </>
+              )}
               <span className="ml-3 text-[13px] uppercase tracking-[0.12em] text-white/70">
                 {durationLabel(best.durationMins)}
               </span>
@@ -237,12 +281,12 @@ export function Results({ onAddFriends }: ResultsProps) {
               <IconCopy width={14} height={14} /> Copy for group chat
             </button>
           </div>
-          <div className="flex gap-6 border-t border-white/20 pt-4 sm:flex-col sm:gap-3 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
+          <dl className="flex gap-6 border-t border-white/20 pt-4 sm:flex-col sm:gap-3 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0">
             <Stat value={String(windows.length)} label="windows" />
             <Stat value={durationLabel(totalFreeMins)} label="shared free" />
             <Stat value={String(total)} label={total === 1 ? "person" : "people"} />
-          </div>
-        </div>
+          </dl>
+        </section>
       )}
 
       {/* Heatmap */}
@@ -252,11 +296,24 @@ export function Results({ onAddFriends }: ResultsProps) {
           Times in <span className="text-maroon">{tzLabel(viewerTz)}</span>
         </span>
       </div>
+      <p id={mapHelpId} className="sr-only">
+        Use the arrow keys to move through the map, one half hour at a time.
+        Who is free is announced below the map.
+      </p>
       <div
+        role="group"
+        aria-label={`Overlap map, ${visibleDays.length} days`}
+        aria-describedby={mapHelpId}
+        tabIndex={0}
+        onKeyDown={onMapKey}
+        onFocus={() => {
+          if (!hoverVisible) setHover({ d: visibleDays[0], s: rangeStart });
+        }}
         className="overflow-x-auto border border-border bg-surface p-4"
         onMouseLeave={() => setHover(null)}
       >
-        <div className="min-w-[520px]">
+        {/* The cells are visual; the live readout below is their text equivalent. */}
+        <div className="min-w-[520px]" aria-hidden="true">
           {/* Hour ruler */}
           <div
             className="mb-2 grid"
@@ -299,7 +356,7 @@ export function Results({ onAddFriends }: ResultsProps) {
                     const bg = all
                       ? `rgb(${MAROON_RGB})`
                       : `rgba(${MAROON_RGB}, ${(frac * 0.45 + (frac > 0 ? 0.06 : 0)).toFixed(3)})`;
-                    const hovered = hover?.d === d && hover?.s === s;
+                    const hovered = hoverVisible && hover?.d === d && hover?.s === s;
                     return (
                       <div
                         key={s}
@@ -328,9 +385,10 @@ export function Results({ onAddFriends }: ResultsProps) {
       {/* Hover readout — who's free in the cell under the pointer */}
       <div
         aria-live="polite"
+        aria-atomic="true"
         className="flex min-h-[44px] flex-wrap items-baseline gap-x-3 gap-y-1 border-x border-b border-border bg-bg px-4 py-2.5 text-[12px]"
       >
-        {hoverInfo ? (
+        {hoverInfo && hoverVisible ? (
           <>
             <span className="font-mono tabular-nums text-text">
               {hoverInfo.label}
@@ -352,13 +410,13 @@ export function Results({ onAddFriends }: ResultsProps) {
           </>
         ) : (
           <span className="eyebrow text-text-3">
-            Hover or tap the map to see who&apos;s busy
+            Hover, tap or arrow through the map to see who&apos;s busy
           </span>
         )}
       </div>
 
       {/* Legend */}
-      <div className="mb-12 mt-3 flex items-center gap-2">
+      <div className="mb-12 mt-3 flex items-center gap-2" aria-hidden="true">
         <span className="eyebrow">Fewer free</span>
         <div className="flex">
           {[0.12, 0.28, 0.45, 1].map((a, i) => (
@@ -424,15 +482,15 @@ export function Results({ onAddFriends }: ResultsProps) {
               key={day}
               className="grid gap-3 border-b border-border py-5 sm:grid-cols-[120px_1fr]"
             >
-              <div className="font-display text-[17px] font-bold tracking-tight">
+              <h4 className="font-display text-[17px] font-bold tracking-tight">
                 {DAYS[day]}
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              </h4>
+              <ul className="grid gap-2 sm:grid-cols-2" aria-label={`${DAYS[day]} free windows`}>
                 {list.map((w) => {
                   const t = fmt(w);
                   const isBest = w === best;
                   return (
-                    <div
+                    <li
                       key={w.startSlot}
                       className={`border px-4 py-3 transition-colors ${
                         isBest
@@ -442,7 +500,15 @@ export function Results({ onAddFriends }: ResultsProps) {
                     >
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="font-mono text-[14px] tabular-nums">
-                          {t.allDay ? "All day" : `${t.start} – ${t.end}`}
+                          {t.allDay ? (
+                            "All day"
+                          ) : (
+                            <>
+                              {t.start} <span aria-hidden="true">–</span>
+                              <span className="sr-only">to</span> {t.end}
+                            </>
+                          )}
+                          {isBest && <span className="sr-only"> (best bet)</span>}
                         </span>
                         <span
                           className={`eyebrow ${isBest ? "text-maroon" : ""}`}
@@ -467,10 +533,10 @@ export function Results({ onAddFriends }: ResultsProps) {
                           ))}
                         </div>
                       )}
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           ))}
         </div>
@@ -523,13 +589,13 @@ function windowTimes(
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div>
-      <div className="font-display text-[22px] font-bold leading-none tabular-nums">
-        {value}
-      </div>
-      <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/70">
+    <div className="flex flex-col-reverse">
+      <dt className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/80">
         {label}
-      </div>
+      </dt>
+      <dd className="font-display text-[22px] font-bold leading-none tabular-nums">
+        {value}
+      </dd>
     </div>
   );
 }
@@ -542,8 +608,10 @@ function Control({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <div className="eyebrow mb-2">{label}</div>
+    <div role="group" aria-label={label}>
+      <div className="eyebrow mb-2" aria-hidden="true">
+        {label}
+      </div>
       {children}
     </div>
   );

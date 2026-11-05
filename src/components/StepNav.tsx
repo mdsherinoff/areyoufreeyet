@@ -41,6 +41,7 @@ export function StepNav({ current, onChange, counts = {}, ref }: StepNavProps) {
             }`}
           >
             <span
+              aria-hidden="true"
               className={`flex h-6 w-6 shrink-0 items-center justify-center font-mono text-[11px] transition-colors ${
                 active
                   ? "bg-maroon text-white"
@@ -59,14 +60,21 @@ export function StepNav({ current, onChange, counts = {}, ref }: StepNavProps) {
               }`}
             >
               {label}
+              {done && <span className="sr-only"> (visited)</span>}
             </span>
             {count !== undefined && count > 0 && (
               <span
+                aria-hidden="true"
                 className={`hidden font-mono text-[11px] tabular-nums sm:inline ${
                   active ? "text-maroon" : "text-text-3"
                 }`}
               >
                 {count}
+              </span>
+            )}
+            {count !== undefined && count > 0 && (
+              <span className="sr-only">
+                , {count} {n === 1 ? (count === 1 ? "event" : "events") : count === 1 ? "friend" : "friends"}
               </span>
             )}
           </button>

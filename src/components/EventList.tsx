@@ -66,7 +66,7 @@ export function EventList({
   }
 
   return (
-    <ul className="border-t border-border">
+    <ul className="border-t border-border" aria-label="Busy times">
       {rows.map(({ ev, display }) => {
         const recurring = ev.type === "recurring";
         const editing = ev.id === editingId;
@@ -77,14 +77,19 @@ export function EventList({
               editing ? "bg-maroon-light" : "hover:bg-bg"
             }`}
           >
+            {/* No aria-label: the button's own text (title, days, times) is
+                its name, so screen readers hear the whole event. */}
             <button
+              id={`edit-${ev.id}`}
               type="button"
               onClick={() => onEdit(ev)}
+              aria-expanded={editing}
               className="flex min-w-0 flex-1 items-center gap-4 py-3 text-left"
               title="Edit"
-              aria-label={`Edit ${ev.title}`}
             >
+              <span className="sr-only">Edit: </span>
               <span
+                aria-hidden="true"
                 className={`h-2.5 w-2.5 shrink-0 ${
                   recurring ? "bg-maroon" : "bg-amber"
                 }`}
@@ -107,7 +112,9 @@ export function EventList({
                 {daysLabel(display.days)}
               </div>
               <div className="shrink-0 text-right font-mono text-[13px] tabular-nums sm:w-[120px]">
-                {formatTimeStr(display.startTime)}–
+                {formatTimeStr(display.startTime)}
+                <span aria-hidden="true">–</span>
+                <span className="sr-only"> to </span>
                 {formatTimeStr(display.endTime)}
               </div>
             </button>

@@ -53,6 +53,8 @@ export function IcsImport({ onImport }: IcsImportProps) {
         type="file"
         accept=".ics,text/calendar"
         className="hidden"
+        tabIndex={-1}
+        aria-hidden="true"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
@@ -66,16 +68,15 @@ export function IcsImport({ onImport }: IcsImportProps) {
       >
         <IconUpload width={15} height={15} /> Import .ics
       </button>
-      {status && (
-        <span
-          role="status"
-          className={`eyebrow ${
-            status.tone === "error" ? "text-red" : status.tone === "ok" ? "text-maroon" : ""
-          }`}
-        >
-          {status.text}
-        </span>
-      )}
+      {/* Always-mounted live region so screen readers announce each update. */}
+      <span
+        role="status"
+        className={`eyebrow ${
+          status?.tone === "error" ? "text-red" : status?.tone === "ok" ? "text-maroon" : ""
+        }`}
+      >
+        {status?.text}
+      </span>
     </div>
   );
 }
