@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import { createPerson } from "@/lib/factory";
 import { TimezonePicker } from "./TimezonePicker";
@@ -18,6 +18,20 @@ export function AddFriend({ defaultTimezone, onAdded }: AddFriendProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [timezone, setTimezone] = useState(defaultTimezone);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Return focus to the trigger after Cancel/Esc so keyboard users keep their place.
+  const [refocus, setRefocus] = useState(false);
+  useEffect(() => {
+    if (!open && refocus) {
+      triggerRef.current?.focus();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRefocus(false);
+    }
+  }, [open, refocus]);
+  const cancel = () => {
+    setRefocus(true);
+    setOpen(false);
+  };
 
   const submit = () => {
     const person = createPerson(name.trim() || "Friend", timezone);
@@ -31,6 +45,7 @@ export function AddFriend({ defaultTimezone, onAdded }: AddFriendProps) {
   if (!open) {
     return (
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 border border-text px-4 py-2 text-[13px] font-medium transition-colors hover:bg-maroon hover:border-maroon hover:text-white active:scale-[0.98]"
@@ -46,7 +61,8 @@ export function AddFriend({ defaultTimezone, onAdded }: AddFriendProps) {
         e.preventDefault();
         submit();
       }}
-      onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
+      onKeyDown={(e) => e.key === "Escape" && cancel()}
+      aria-label="Add a friend"
       className="flex w-full flex-wrap items-end gap-4 border-l-2 border-maroon pl-5"
     >
       <div className="min-w-[160px] flex-1">
@@ -73,7 +89,7 @@ export function AddFriend({ defaultTimezone, onAdded }: AddFriendProps) {
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={cancel}
           className="text-[13px] font-medium text-text-2 transition-colors hover:text-text"
         >
           Cancel

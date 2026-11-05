@@ -55,14 +55,19 @@ export function WeekStrip({
         <span className="eyebrow">
           Week at a glance
           {onPick && (
-            <span className="hidden text-text-3 sm:inline"> · click to add</span>
+            <span className="hidden text-text-3 sm:inline" aria-hidden="true">
+              {" "}
+              · click to add
+            </span>
           )}
         </span>
         <span className="eyebrow">
           <span className="text-text">{busyHours}h</span> busy
         </span>
       </div>
-      <div className="flex flex-col gap-[5px]">
+      {/* Visual only: the event list below carries the same information, and
+          "Add event" is the keyboard route to what clicking here does. */}
+      <div className="flex flex-col gap-[5px]" aria-hidden="true">
         {runs.map((dayRuns, d) => (
           <div key={d} className="flex items-center gap-3">
             <span className="w-7 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-text-2">
@@ -106,7 +111,7 @@ export function WeekStrip({
           </div>
         ))}
       </div>
-      <div className="relative ml-10 mt-1.5 h-3">
+      <div className="relative ml-10 mt-1.5 h-3" aria-hidden="true">
         {HOUR_MARKS.map((h) => (
           <span
             key={h}

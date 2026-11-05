@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { scrollBehavior } from "@/lib/motion";
 import { BusyEvent } from "@/types";
 import { createEvent } from "@/lib/factory";
 import { convertEventDaysToUTC } from "@/lib/timezone";
@@ -60,10 +61,22 @@ export function EventForm({
   const [error, setError] = useState<string | null>(null);
   const rootRef = useRef<HTMLFormElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const typeRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Unique ids: several forms can exist on the page (one per person card).
+  const uid = useId();
+  const ids = {
+    heading: `${uid}-heading`,
+    title: `${uid}-title`,
+    repeats: `${uid}-repeats`,
+    days: `${uid}-days`,
+    from: `${uid}-from`,
+    to: `${uid}-to`,
+    error: `${uid}-error`,
+  };
 
   // Bring the form into view and focus the title when it opens.
   useEffect(() => {
-    rootRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    rootRef.current?.scrollIntoView({ block: "nearest", behavior: scrollBehavior() });
     titleRef.current?.focus({ preventScroll: true });
   }, []);
 
@@ -126,18 +139,20 @@ export function EventForm({
           onCancel();
         }
       }}
+      aria-labelledby={ids.heading}
+      noValidate
       className="mt-6 scroll-mt-6 border-l-2 border-maroon pl-5"
     >
-      <div className="eyebrow mb-5 text-maroon">
+      <h4 id={ids.heading} className="eyebrow mb-5 text-maroon">
         {editingId ? "Edit busy time" : "Add busy time"}
-      </div>
+      </h4>
 
       <div className="mb-5">
-        <label htmlFor="ev-title" className="eyebrow mb-2 block">
+        <label htmlFor={ids.title} className="eyebrow mb-2 block">
           Title
         </label>
         <input
-          id="ev-title"
+          id={ids.title}
           ref={titleRef}
           type="text"
           placeholder="e.g. Maths lecture"
@@ -148,14 +163,39 @@ export function EventForm({
       </div>
 
       <div className="mb-5">
-        <span className="eyebrow mb-2 block">Repeats</span>
-        <div className="inline-flex border border-border-mid" role="radiogroup">
-          {(["recurring", "once"] as const).map((t) => (
+        <span id={ids.repeats} className="eyebrow mb-2 block">
+          Repeats
+        </span>
+        <div
+          className="inline-flex border border-border-mid"
+          role="radiogroup"
+          aria-labelledby={ids.repeats}
+          onKeyDown={(e) => {
+            // Arrow keys move between options, as with native radios.
+            const order = ["recurring", "once"] as const;
+            const delta =
+              e.key === "ArrowRight" || e.key === "ArrowDown"
+                ? 1
+                : e.key === "ArrowLeft" || e.key === "ArrowUp"
+                  ? -1
+                  : 0;
+            if (!delta) return;
+            e.preventDefault();
+            const next = (order.indexOf(type) + delta + order.length) % order.length;
+            setType(order[next]);
+            typeRefs.current[next]?.focus();
+          }}
+        >
+          {(["recurring", "once"] as const).map((t, i) => (
             <button
               key={t}
+              ref={(el) => {
+                typeRefs.current[i] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={type === t}
+              tabIndex={type === t ? 0 : -1}
               onClick={() => setType(t)}
               className={`px-4 py-2 text-[13px] font-medium transition-colors ${
                 type === t
@@ -171,12 +211,15 @@ export function EventForm({
 
       <div className="mb-5">
         <div className="mb-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <span className="eyebrow">Days</span>
-          <div className="flex gap-3">
+          <span id={ids.days} className="eyebrow">
+            Days
+          </span>
+          <div className="flex gap-3" role="group" aria-label="Day presets">
             {PRESETS.map((p) => (
               <button
                 key={p.label}
                 type="button"
+                aria-pressed={sameDays(days, p.days)}
                 onClick={() => {
                   setError(null);
                   setDays(sameDays(days, p.days) ? [] : p.days);
@@ -190,7 +233,12 @@ export function EventForm({
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div
+          className="flex flex-wrap gap-1.5"
+          role="group"
+          aria-labelledby={ids.days}
+          aria-describedby={error ? ids.error : undefined}
+        >
           {DAYS.map((d, i) => (
             <button
               type="button"
@@ -204,7 +252,7 @@ export function EventForm({
                   : "border-border-mid bg-transparent text-text-2 hover:border-text"
               }`}
             >
-              {d.slice(0, 2)}
+              <span aria-hidden="true">{d.slice(0, 2)}</span>
             </button>
           ))}
         </div>
@@ -212,11 +260,12 @@ export function EventForm({
 
       <div className="mb-5 flex flex-wrap items-end gap-4">
         <div>
-          <label htmlFor="ev-from" className="eyebrow mb-2 block">
+          <label htmlFor={ids.from} className="eyebrow mb-2 block">
             From
           </label>
           <input
-            id="ev-from"
+            id={ids.from}
+            aria-describedby={error ? ids.error : undefined}
             type="time"
             step={1800}
             value={startTime}
@@ -225,11 +274,12 @@ export function EventForm({
           />
         </div>
         <div>
-          <label htmlFor="ev-to" className="eyebrow mb-2 block">
+          <label htmlFor={ids.to} className="eyebrow mb-2 block">
             To
           </label>
           <input
-            id="ev-to"
+            id={ids.to}
+            aria-describedby={error ? ids.error : undefined}
             type="time"
             step={1800}
             value={endTime}
@@ -237,16 +287,18 @@ export function EventForm({
             className={`${inputCls} font-mono`}
           />
         </div>
-        {lengthMins > 0 && (
-          <div className="eyebrow pb-2.5">
-            {durationLabel(lengthMins)}
-            {overnight && " · ends next day"}
-          </div>
-        )}
+        <div className="eyebrow pb-2.5" aria-live="polite">
+          {lengthMins > 0 && (
+            <>
+              {durationLabel(lengthMins)}
+              {overnight && " · ends next day"}
+            </>
+          )}
+        </div>
       </div>
 
       {error && (
-        <div role="alert" className="mb-4 text-[13px] text-red">
+        <div id={ids.error} role="alert" className="mb-4 text-[13px] text-red">
           {error}
         </div>
       )}
@@ -265,7 +317,10 @@ export function EventForm({
         >
           Cancel
         </button>
-        <span className="eyebrow ml-auto hidden text-text-3 sm:inline">
+        <span
+          aria-hidden="true"
+          className="eyebrow ml-auto hidden text-text-3 sm:inline"
+        >
           Enter to save · Esc to cancel
         </span>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BusyEvent, Person } from "@/types";
 import { useSession } from "@/context/SessionContext";
 import { convertEventDaysFromUTC } from "@/lib/timezone";
@@ -37,7 +37,26 @@ export function PersonSchedule({
     notify,
   } = useSession();
   const [form, setForm] = useState<FormState>({ mode: "closed" });
-  const close = () => setForm({ mode: "closed" });
+  const addBtnRef = useRef<HTMLButtonElement>(null);
+  // Where keyboard focus should return when the form closes. Without this
+  // focus falls to <body> as the form unmounts and users lose their place.
+  const returnFocusTo = useRef<string | null>(null);
+  const close = () => {
+    returnFocusTo.current =
+      form.mode === "edit" ? `edit-${form.event.id}` : "add";
+    setForm({ mode: "closed" });
+  };
+
+  useEffect(() => {
+    if (form.mode !== "closed" || !returnFocusTo.current) return;
+    const target = returnFocusTo.current;
+    returnFocusTo.current = null;
+    const el =
+      (target !== "add" && document.getElementById(target)) || addBtnRef.current;
+    el?.focus({ preventScroll: true });
+  }, [form.mode]);
+
+  const displayName = person.name.trim() || (removable ? "Friend" : "You");
 
   const startEdit = (ev: BusyEvent) => {
     const local = convertEventDaysFromUTC(
@@ -66,12 +85,19 @@ export function PersonSchedule({
     });
 
   return (
-    <div
+    <section
       id={`person-${person.id}`}
+      aria-labelledby={`person-${person.id}-heading`}
+      tabIndex={-1}
       className="scroll-mt-6 border border-border bg-surface/60 p-5 shadow-card sm:p-6"
     >
+      <h3 id={`person-${person.id}-heading`} className="sr-only">
+        {displayName}&apos;s schedule
+      </h3>
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-maroon font-mono text-sm font-medium text-white">
+        <div
+          aria-hidden="true"
+          className="flex h-10 w-10 shrink-0 items-center justify-center bg-maroon font-mono text-sm font-medium text-white">
           {initials(person.name)}
         </div>
         <input
@@ -79,12 +105,13 @@ export function PersonSchedule({
           value={person.name}
           onChange={(e) => updatePerson(person.id, { name: e.target.value })}
           placeholder="Name"
-          aria-label="Name"
+          aria-label={removable ? "Friend's name" : "Your name"}
           className="min-w-[120px] max-w-[240px] flex-1 border-b-2 border-transparent hover:border-border bg-transparent pb-1 font-display text-xl font-bold tracking-tight outline-none transition-colors focus:border-maroon"
         />
         <div className="ml-auto flex items-center gap-4">
           <TimezonePicker
             label=""
+            ariaLabel={`${displayName}'s timezone`}
             value={person.timezone}
             onChange={(tz) => updatePerson(person.id, { timezone: tz })}
           />
@@ -114,7 +141,13 @@ export function PersonSchedule({
           editingId={form.mode === "edit" ? form.event.id : undefined}
           onEdit={startEdit}
           onRemove={(eventId) => {
-            if (form.mode === "edit" && form.event.id === eventId) close();
+            // The removed row's buttons vanish; keep focus inside the card.
+            if (form.mode === "edit" && form.event.id === eventId) {
+              close();
+              returnFocusTo.current = "add";
+            } else if (form.mode === "closed") {
+              addBtnRef.current?.focus({ preventScroll: true });
+            }
             removeEvent(person.id, eventId);
           }}
         />
@@ -141,6 +174,7 @@ export function PersonSchedule({
       ) : (
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button
+            ref={addBtnRef}
             type="button"
             onClick={() => setForm({ mode: "new", key: Date.now() })}
             className="inline-flex items-center gap-2 border border-text px-4 py-2 text-[13px] font-medium transition-colors hover:bg-maroon hover:border-maroon hover:text-white active:scale-[0.98]"
@@ -150,7 +184,7 @@ export function PersonSchedule({
           <IcsImport onImport={(events) => addEvents(person.id, events)} />
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

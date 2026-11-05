@@ -9,6 +9,9 @@ const base = (props: SVGProps<SVGSVGElement>) => ({
   strokeWidth: 2,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
+  // Icons are decorative: the surrounding control carries the label.
+  "aria-hidden": true,
+  focusable: false,
   ...props,
 });
 

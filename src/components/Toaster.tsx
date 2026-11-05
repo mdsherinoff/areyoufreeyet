@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "@/context/SessionContext";
 import { IconClose } from "./Icons";
 
@@ -9,12 +9,25 @@ const TIMEOUT_MS = 5000;
 /** Bottom-of-screen notice, with an Undo action after destructive changes. */
 export function Toaster() {
   const { toast, dismissToast, undo } = useSession();
+  // Hold the toast open while the pointer or keyboard focus is on it, so
+  // nobody loses the Undo button mid-reach (WCAG 2.2.1 Timing Adjustable).
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const paused = hovered || focused;
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || paused) return;
     const t = setTimeout(dismissToast, toast.undoable ? TIMEOUT_MS + 2000 : TIMEOUT_MS);
     return () => clearTimeout(t);
-  }, [toast, dismissToast]);
+  }, [toast, dismissToast, paused]);
+
+  // Leaving the hover/focus state tied to a toast that has gone.
+  useEffect(() => {
+    if (toast) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHovered(false);
+    setFocused(false);
+  }, [toast]);
 
   // Cmd/Ctrl+Z undoes the last removal while its toast is up — but never
   // steals undo from a text field the user is typing in.
@@ -42,9 +55,20 @@ export function Toaster() {
         <div
           key={toast.id}
           role="status"
-          className="toast-in pointer-events-auto flex max-w-full items-center gap-4 bg-text py-2.5 pl-4 pr-2 text-[13px] text-white shadow-pop"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onFocus={() => setFocused(true)}
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
+          }}
+          className="toast-in on-dark pointer-events-auto flex max-w-full items-center gap-4 bg-text py-2.5 pl-4 pr-2 text-[13px] text-white shadow-pop"
         >
-          <span className="truncate">{toast.message}</span>
+          <span className="truncate">
+            {toast.message}
+            {toast.undoable && (
+              <span className="sr-only">. Press Undo, or Control or Command Z, to restore.</span>
+            )}
+          </span>
           {toast.undoable && (
             <button
               type="button"
@@ -57,8 +81,8 @@ export function Toaster() {
           <button
             type="button"
             onClick={dismissToast}
-            aria-label="Dismiss"
-            className="shrink-0 p-1 text-white/60 transition-colors hover:text-white"
+            aria-label="Dismiss notification"
+            className="shrink-0 p-1.5 text-white/70 transition-colors hover:text-white"
           >
             <IconClose width={14} height={14} />
           </button>

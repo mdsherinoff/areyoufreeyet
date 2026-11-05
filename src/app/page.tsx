@@ -9,6 +9,7 @@ import { StepNav, Step } from "@/components/StepNav";
 import { ShareButton } from "@/components/ShareButton";
 import { Toaster } from "@/components/Toaster";
 import { IconArrowLeft, IconArrowRight, IconClose } from "@/components/Icons";
+import { scrollBehavior } from "@/lib/motion";
 
 const STEP_KEY = "areyoufreeyet:step";
 
@@ -37,6 +38,9 @@ export default function Home() {
   const [bannerOpen, setBannerOpen] = useState(true);
   const [newFriendId, setNewFriendId] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  // Only move focus after a user-initiated step change, not on first load.
+  const focusOnStepChange = useRef(false);
 
   // Restore the last step on reload; a fresh shared link lands on Friends so
   // the visitor can add themselves straight away.
@@ -61,24 +65,43 @@ export default function Home() {
     } catch {
       /* non-fatal */
     }
+    focusOnStepChange.current = true;
     // Keep the step tabs in view when moving between steps from the footer.
     const nav = navRef.current;
     if (nav && nav.getBoundingClientRect().top < 0) {
-      nav.scrollIntoView({ behavior: "smooth", block: "start" });
+      nav.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     }
   };
+
+  // After switching steps, move focus to the new section's heading so
+  // keyboard and screen-reader users land at the start of the new content.
+  // Also reflect the step in the tab title.
+  useEffect(() => {
+    if (!ready) return;
+    document.title = `${STEP_META[step].title} · AreYouFreeYet`;
+    if (focusOnStepChange.current) {
+      focusOnStepChange.current = false;
+      headingRef.current?.focus({ preventScroll: true });
+    }
+  }, [step, ready]);
 
   // Scroll a just-added friend's card into view.
   useEffect(() => {
     if (!newFriendId) return;
-    document
-      .getElementById(`person-${newFriendId}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const card = document.getElementById(`person-${newFriendId}`);
+    card?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+    // Move focus with it so keyboard users continue inside the new card.
+    card?.focus({ preventScroll: true });
   }, [newFriendId]);
 
   if (!ready) {
     return (
-      <div className="mx-auto w-full max-w-[900px] px-6 py-14 sm:py-16" aria-busy>
+      <div
+        className="mx-auto w-full max-w-[900px] px-6 py-14 sm:py-16"
+        aria-busy="true"
+        role="status"
+      >
+        <span className="sr-only">Loading…</span>
         <div className="h-[132px] w-[300px] max-w-full animate-pulse bg-border/60" />
         <div className="rule-bold mt-10 opacity-30" />
         <div className="mt-10 h-[280px] animate-pulse border border-border bg-surface/60" />
@@ -92,13 +115,19 @@ export default function Home() {
 
   return (
     <div className="mx-auto w-full max-w-[900px] px-6 py-14 sm:py-16">
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
       {/* Masthead */}
       <header>
         <div className="flex items-start justify-between gap-6 flex-wrap">
           <h1 className="display uppercase text-[clamp(42px,10vw,74px)]">
-            Are<span className="text-maroon">You</span>
-            <br />
-            FreeYet<span className="text-maroon">.</span>
+            <span className="sr-only">AreYouFreeYet</span>
+            <span aria-hidden="true">
+              Are<span className="text-maroon">You</span>
+              <br />
+              FreeYet<span className="text-maroon">.</span>
+            </span>
           </h1>
           <div className="pt-1.5">
             <ShareButton />
@@ -116,7 +145,11 @@ export default function Home() {
       />
 
       {joinedFromLink && bannerOpen && (
-        <div className="mb-10 flex items-start gap-3 border-l-2 border-maroon pl-4 text-[13px]">
+        <div
+          role="region"
+          aria-label="Shared plan"
+          className="mb-10 flex items-start gap-3 border-l-2 border-maroon pl-4 text-[13px]"
+        >
         <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="eyebrow text-maroon">Shared plan</span>
           <span className="text-text-2">
@@ -136,8 +169,8 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setBannerOpen(false)}
-            aria-label="Dismiss"
-            className="shrink-0 p-0.5 text-text-3 transition-colors hover:text-text"
+            aria-label="Dismiss shared plan notice"
+            className="-m-1 shrink-0 p-1.5 text-text-3 transition-colors hover:text-text"
           >
             <IconClose width={14} height={14} />
           </button>
@@ -145,9 +178,16 @@ export default function Home() {
       )}
 
       {/* Active section */}
-      <section className="mb-12">
-        <div className="eyebrow text-maroon">Step {meta.num} / 03</div>
-        <h2 className="display mt-2 uppercase text-[clamp(26px,5vw,34px)]">
+      <main id="main" tabIndex={-1} className="mb-12 scroll-mt-4">
+        <div className="eyebrow text-maroon" aria-hidden="true">
+          Step {meta.num} / 03
+        </div>
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          className="display mt-2 uppercase text-[clamp(26px,5vw,34px)]"
+        >
+          <span className="sr-only">Step {step} of 3: </span>
           {meta.title}
         </h2>
         <p className="mt-3 max-w-[60ch] text-[14px] leading-relaxed text-text-2">
@@ -189,10 +229,13 @@ export default function Home() {
 
           {step === 3 && <Results onAddFriends={() => setStep(2)} />}
         </div>
-      </section>
+      </main>
 
       {/* Footer nav */}
-      <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
+      <nav
+        aria-label="Previous and next step"
+        className="flex items-center justify-between gap-3 border-t border-border pt-6"
+      >
         {step > 1 ? (
           <button
             type="button"
@@ -200,6 +243,7 @@ export default function Home() {
             className="group inline-flex items-center gap-2 text-[13px] font-medium text-text-2 hover:text-text transition-colors"
           >
             <IconArrowLeft
+              aria-hidden="true"
               width={16}
               height={16}
               className="transition-transform group-hover:-translate-x-0.5"
@@ -223,13 +267,14 @@ export default function Home() {
                   : "See results"}
             </span>
             <IconArrowRight
+              aria-hidden="true"
               width={16}
               height={16}
               className="transition-transform group-hover:translate-x-0.5"
             />
           </button>
         )}
-      </div>
+      </nav>
 
       <Toaster />
     </div>
